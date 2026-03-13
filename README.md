@@ -1,5 +1,5 @@
-# EX-EV
-A fully functional expression evaluator writtien in Ruby.
+# Velvet
+A Ruby-inspired programming language made for fun. No llms used.
 
 
 ### Examples
