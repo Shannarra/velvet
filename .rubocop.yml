@@ -2,14 +2,20 @@ AllCops:
   SuggestExtensions: false
   NewCops: enable
 
+  Exclude:
+    - 'bin/*'
+    
 Style/Documentation:
   Enabled: false
 Style/Encoding:
   Enabled: false
 Style/OneClassPerFile:
   Enabled: false
-
-
+Naming/BlockForwarding:
+  Enabled: false
+Style/ArgumentsForwarding:
+  Enabled: false
+  
 Metrics/AbcSize:
   Max: 100
 Metrics/CyclomaticComplexity:
