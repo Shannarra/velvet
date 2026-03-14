@@ -2,9 +2,12 @@
 
 module Syntax
   class Evaluator
+    attr_reader :diagnostics
+
     def initialize(root, variables)
       @root = root
       @variables = variables
+      @diagnostics = []
     end
 
     def eval!
@@ -22,7 +25,7 @@ module Syntax
 
       if expr.is_a? IdentifierExpressionSyntax
         unless @variables.keys.include? expr.id.value
-          eputs "Unknown variable \"#{expr.id.value}\" at #{expr.id.position}"
+          diagnostics << "Unknown variable \"#{expr.id.value}\" at #{expr.id.print_position}"
           return
         end
 
@@ -56,7 +59,7 @@ module Syntax
 
       return evaluate_expr! expr.expression if expr.is_a? ParenthesizedExpressionSyntax
 
-      raise "Unexpected node #{expr.is_a?(Token) ? expr.kind : expr}".error!
+      diagnostics << "Unexpected node #{expr.is_a?(Token) ? expr.kind : expr}"
     end
   end
 end

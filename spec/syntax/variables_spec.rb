@@ -3,32 +3,32 @@
 require 'spec_helper'
 
 RSpec.describe 'Testing variables', type: :feature do
+  let(:evaluator) { Syntax::Evaluator }
+  let(:variables) { {} }
+
+  before do
+    @eval = ->(root, variables) { evaluator.new(root, variables).eval! }
+  end
+
+  def perform!(text)
+    lines = text.split("\n")
+
+    lines.each do |line|
+      tree = Syntax::SyntaxTree.parse(line)
+
+      expect(tree.diagnostics).to be_empty
+      @eval.call(tree.root, variables)
+    end
+  end
+
   context 'when creating a new variable' do
-    let(:evaluator) { Syntax::Evaluator }
-    let(:variables) { {} }
-
-    before do
-      @eval = ->(root, variables) { evaluator.new(root, variables).eval! }
-    end
-
-    def perform!(text)
-      lines = text.split("\n")
-
-      lines.each do |line|
-        tree = Syntax::SyntaxTree.parse(line)
-
-        expect(tree.diagnostics).to be_empty
-        @eval.call(tree.root, variables)
-      end
-    end
-
     describe 'creates variables correctly' do
       let(:text) do
-        <<TEXT
+        <<~TEXT
           a = 1
           b = 2
           c = a + b
-TEXT
+        TEXT
       end
 
       it 'creates two variables and adds them' do
@@ -39,19 +39,19 @@ TEXT
         expect(variables['c']).to eq(3)
       end
 
-      let(:text2) do
-        <<TEXT
-         number = 17.5
-         part_one = number * 2
-         another_number = 12.3
-         yet_another_number = 21.7
-         part_two = another_number + yet_another_number
-         the_best_number_ever = part_one + part_two
-TEXT
+      let(:text_with_many_variables) do
+        <<~TEXT
+          number = 17.5
+          part_one = number * 2
+          another_number = 12.3
+          yet_another_number = 21.7
+          part_two = another_number + yet_another_number
+          the_best_number_ever = part_one + part_two
+        TEXT
       end
 
       it 'calculates the best number ever' do
-        perform! text2
+        perform! text_with_many_variables
 
         expect(variables['the_best_number_ever']).to eq(69)
 
@@ -61,8 +61,8 @@ TEXT
         expect(variables['c']).to be_nil
       end
 
-      let!(:text_with_complex_variables) do
-        <<TEXT
+      let(:text_with_complex_variables) do
+        <<~TEXT
           thirty_seven      = 5*10-(8*6-15)+4*20/4
           n_nineteen        = 3*(4**2)+8-((11+4)**2)/3
           fifty_six         = 7*9+3-6/2+2*2-11
@@ -71,7 +71,7 @@ TEXT
           n_277k            = 2+2+2+22+2+2*954-6**7+3/65
           two_seventy_seven = ((11*22+33-44)**5)/((6**7)*8+9**9)*(69/420)
           result = thirty_seven + n_nineteen + fifty_six + two + n_fifty_one + n_277k + two_seventy_seven
-TEXT
+        TEXT
       end
       let(:expected_result) { -277_695.639_560_439_57 }
 
@@ -80,6 +80,25 @@ TEXT
 
         expect(variables['result']).to eq expected_result
       end
+    end
+  end
+
+  context 'when using variables' do
+    let(:text_using_nonexistent_var) do
+      'result = a + 69'
+    end
+
+    it 'errors but does not kill the process' do
+      tree = Syntax::SyntaxTree.parse(text_using_nonexistent_var.split("\n").first)
+      expect(tree.diagnostics).to be_empty
+
+      evaluator = Syntax::Evaluator.new(tree.root, variables)
+
+      expect do
+        evaluator.eval!
+      end.not_to raise_error(StandardError, 'Unknown variable "a" at 10')
+
+      expect(evaluator.diagnostics.last).to eq 'Unknown variable "a" at 0:9'
     end
   end
 end

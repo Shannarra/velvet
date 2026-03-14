@@ -23,6 +23,21 @@ def pretty_print_tree(root, indent = '', is_last: true)
   end
 end
 
+def evaluate_expression(tree, variables = {})
+  evaluator = Syntax::Evaluator.new(tree.root, variables)
+  res = evaluator.eval!
+
+  puts res
+rescue RuntimeError
+  print_diagnostics(evaluator)
+end
+
+def print_diagnostics(container)
+  container.diagnostics.each do |diagnostic|
+    eputs diagnostic
+  end
+end
+
 def repl_loop(show_tree)
   variables = {}
 
@@ -48,16 +63,28 @@ def repl_loop(show_tree)
     pretty_print_tree(tree.root) if show_tree
 
     if tree.diagnostics.flatten.any?
-      tree.diagnostics.each do |diagnostic|
-        eputs diagnostic
-      end
+      print_diagnostics(tree)
     else
-      evaluator = Syntax::Evaluator.new(tree.root, variables)
-      res = evaluator.eval!
-
-      puts res
+      evaluate_expression(tree, variables)
     end
   end
+end
+
+def compile_and_execute(file)
+  error! "File #{file} does not exist." unless File.exist? file
+
+  variables = {}
+  contents = File.readlines file
+
+  tree = Syntax::SyntaxTree.parse(contents)
+
+  if tree.diagnostics.flatten.any?
+    print_diagnostics(tree)
+  else
+    evaluate_expression(tree, variables)
+  end
+
+  exit
 end
 
 def main
@@ -66,7 +93,8 @@ def main
     case x
     when '--showTree', '-st', '--debugPrint', '-dp' then debug_show_tree = true
     else
-      wputs "Unrecognized cli argument \"#{x}\". Running with default configuration."
+      compile_and_execute ARGV.first
+      # wputs "Unrecognized cli argument \"#{x}\". Running with default configuration."
     end
   end.clear
 

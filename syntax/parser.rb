@@ -23,7 +23,7 @@ module Syntax
       @text = text
       @tokens = []
       @diagnostics = []
-      @position = 0
+      @ip = 0
 
       tokens = []
       lexer = Lexer.new(text)
@@ -69,7 +69,7 @@ module Syntax
     private
 
     def peek(offset = 1)
-      id = @position + offset
+      id = @ip + offset
       return tokens[-1] if id >= @tokens.count
 
       @tokens[id]
@@ -81,7 +81,7 @@ module Syntax
 
     def next_token
       curr = current
-      @position += 1
+      @ip += 1
       curr
     end
 

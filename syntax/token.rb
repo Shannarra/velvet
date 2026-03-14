@@ -13,5 +13,32 @@ module Syntax
       @text = text
       @value = value
     end
+
+    def print_position
+      col_pos = position.col - (text.length || 0)
+
+      "#{position.row}:#{col_pos}"
+    end
+  end
+
+  class Position
+    attr_accessor :row, :col
+
+    def initialize(row = 0, col = 0)
+      @row = row
+      @col = col
+    end
+
+    def move_forward!(offset)
+      @col += offset
+    end
+
+    def to_s
+      inspect
+    end
+
+    def inspect
+      "#{@row}:#{@col}"
+    end
   end
 end
