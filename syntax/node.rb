@@ -16,6 +16,15 @@ module Syntax
     end
   end
 
+  class GlobalScope < SyntaxNode
+    def initialize
+      super(
+        :GLOBAL_SCOPE,
+        []
+      )
+    end
+  end
+
   class ExpressionSyntax < SyntaxNode
     def initialize(kind, children)
       super

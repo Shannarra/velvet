@@ -94,7 +94,7 @@ module Syntax
 
         get_next while current == initial
         text = @text[start..@ip]
-        Token.new(SyntaxKind::NewlineToken, @position.nextline!, text, nil)
+        Token.new(SyntaxKind::NewlineToken, @position.nextline!.dup, text, nil)
       when "\t"
         initial = current
         start = @ip

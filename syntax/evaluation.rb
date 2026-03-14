@@ -59,6 +59,8 @@ module Syntax
 
       return evaluate_expr! expr.expression if expr.is_a? ParenthesizedExpressionSyntax
 
+      return if expr.is_a? GlobalScope
+
       diagnostics << "Unexpected node #{expr.is_a?(Token) ? expr.kind : expr}"
     end
   end

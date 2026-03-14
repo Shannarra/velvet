@@ -10,6 +10,8 @@ require_relative 'syntax/evaluation'
 def pretty_print_tree(root, indent = '', is_last: true)
   marker = is_last ? '└───' : '├───'
 
+  root = root.root if root.is_a?(Syntax::SyntaxTree)
+
   print "#{indent}#{marker}#{root.kind}"
 
   print " #{root.value}" if root.is_a?(Syntax::Token) && !root.value.nil?

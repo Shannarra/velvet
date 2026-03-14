@@ -14,16 +14,18 @@ module Syntax
     end
   end
 
-  class Parser
+  class Parser # rubocop:disable Metrics/ClassLength
     include ParsingHelpers
 
     attr_reader :diagnostics
 
-    def initialize(text)
+    def initialize(text, scope)
       @text = text
       @tokens = []
       @diagnostics = []
       @ip = 0
+
+      @scope = scope
 
       tokens = []
       lexer = Lexer.new(text)
@@ -44,11 +46,25 @@ module Syntax
       @diagnostics << lexer.diagnostics
     end
 
-    def parse
-      expr = parse_expression
-      eof = match(SyntaxKind::EOFToken)
+    def parse(scope_eof = nil)
+      scope = scope_eof || SyntaxKind::NewlineToken
 
-      SyntaxTree.new(@diagnostics, expr, eof)
+      puts "Parsing with scope #{scope}, and #{@tokens.count - @ip} tokens left"
+
+      expr = parse_expression
+      eof = match(scope)
+
+      @scope.root.children << SyntaxTree.new(@diagnostics, expr, eof).root
+
+      new_scope = if @tokens.count - @ip == 2
+                    SyntaxKind::EOFToken if current.kind == Constants::Kinds::EOF
+                  else
+                    scope
+                  end
+
+      @tokens.shift(@ip)
+
+      parse(new_scope)
     end
 
     def parse_expression(parent_precedence = 0)
@@ -70,7 +86,7 @@ module Syntax
 
     def peek(offset = 1)
       id = @ip + offset
-      return tokens[-1] if id >= @tokens.count
+      return @tokens[-1] if id >= @tokens.count
 
       @tokens[id]
     end
@@ -87,7 +103,14 @@ module Syntax
 
     def match(kind)
       return next_token if current.kind == kind
-      return next_token if [SyntaxKind::NewlineToken, SyntaxKind::TabToken, SyntaxKind::WhitespaceToken].include? current.kind
+
+      if [SyntaxKind::TabToken, SyntaxKind::WhitespaceToken].include? current.kind
+        next_token
+        return next_token
+      end
+
+      raise StandardError, current if current.kind == SyntaxKind::NewlineToken
+
 
       diagnostics << "Unexpected token <#{current.kind}>. Expected <#{kind}>"
       Token.new(kind, current.position, nil, nil)
@@ -128,6 +151,8 @@ module Syntax
 
     def parse_id
       id = next_token
+
+      next_token while Constants::Kinds::SPACES.include?(current.kind)
 
       if current.kind == SyntaxKind::AssignmentToken
         _assignment_op = match(SyntaxKind::AssignmentToken)
