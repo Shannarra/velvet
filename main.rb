@@ -74,9 +74,11 @@ def compile_and_execute(file)
   error! "File #{file} does not exist." unless File.exist? file
 
   variables = {}
-  contents = File.readlines file
+  contents = File.read file
 
   tree = Syntax::SyntaxTree.parse(contents)
+
+  pretty_print_tree(tree.root)
 
   if tree.diagnostics.flatten.any?
     print_diagnostics(tree)

@@ -27,6 +27,16 @@ module Syntax
     IdentifierToken
   ]
 
+  module Constants
+    module Values
+      SPACES = [' ', "\n", "\t"].freeze
+      OPERATORS = %w[+ - * / ( ) =].freeze
+      EOF = '\0'
+
+      NON_ALPHA = [*SPACES, *OPERATORS, EOF].freeze
+    end
+  end
+
   class SyntaxTree
     attr_reader :diagnostics, :root, :eof_token
 

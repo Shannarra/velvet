@@ -37,7 +37,7 @@ module Syntax
                SyntaxKind::AssignmentToken
              else
                token = ''
-               until [' ', '=', '\0'].include?(current)
+               until Constants::Values::NON_ALPHA.include?(current)
                  token += current
                  get_next
                end
@@ -45,10 +45,12 @@ module Syntax
                return Token.new(SyntaxKind::IdentifierToken, @position.dup, token, token)
              end
 
-      return Token.new(type, get_next, current, nil) if type
+      old_value = current
+      get_next
+      return Token.new(type, @position.dup, old_value, nil) if type
 
       @diagnostics << "Bad character input: '#{current}'"
-      Token.new(SyntaxKind::BadToken, get_next, @text[@ip - 1], nil)
+      Token.new(SyntaxKind::BadToken, @position.dup, @text[@ip - 1], nil)
     end
 
     private
@@ -75,7 +77,7 @@ module Syntax
         @diagnostics << "[ERROR] \"#{text}\" is not a valid number!"
       end
 
-      Token.new(SyntaxKind::NumberToken, start, text, num)
+      Token.new(SyntaxKind::NumberToken, @position.dup, text, num)
     end
 
     def handle_whitetext
@@ -92,7 +94,7 @@ module Syntax
 
         get_next while current == initial
         text = @text[start..@ip]
-        Token.new(SyntaxKind::NewlineToken, @position.dup, text, nil)
+        Token.new(SyntaxKind::NewlineToken, @position.nextline!, text, nil)
       when "\t"
         initial = current
         start = @ip
@@ -113,8 +115,8 @@ module Syntax
 
     # rubocop:disable Naming/AccessorMethodName
     def get_next
-      @ip += 1
       @position.move_forward!(1)
+      @ip += 1
     end
     # rubocop:enable Naming/AccessorMethodName
   end

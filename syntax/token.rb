@@ -19,6 +19,14 @@ module Syntax
 
       "#{position.row}:#{col_pos}"
     end
+
+    def inspect
+      "<Token:#{kind}, text = \"#{text}\" (value \"#{value}\") at #{print_position}>"
+    end
+
+    def to_s
+      inspect
+    end
   end
 
   class Position
@@ -31,6 +39,14 @@ module Syntax
 
     def move_forward!(offset)
       @col += offset
+      self
+    end
+
+    def nextline!
+      old = self
+      @col = 0
+      @row += 1
+      old
     end
 
     def to_s
