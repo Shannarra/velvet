@@ -24,12 +24,10 @@ module Syntax
       end
 
       if expr.is_a? IdentifierExpressionSyntax
-        unless @variables.keys.include? expr.id.value
-          diagnostics << "Unknown variable \"#{expr.id.value}\" at #{expr.id.print_position}"
-          return
-        end
+        return @variables[expr.id.value] if @variables.keys.include? expr.id.value
 
-        return @variables[expr.id.value]
+        diagnostics << "Unknown variable \"#{expr.id.value}\" at #{expr.id.print_position}"
+        raise
       end
 
       if expr.is_a? AssignmentExpressionSyntax
@@ -59,7 +57,13 @@ module Syntax
 
       return evaluate_expr! expr.expression if expr.is_a? ParenthesizedExpressionSyntax
 
-      return if expr.is_a? GlobalScope
+      if expr.is_a? GlobalScope
+        results = expr.children.map do |subtree|
+          evaluate_expr! subtree
+        end
+
+        return results.last
+      end
 
       diagnostics << "Unexpected node #{expr.is_a?(Token) ? expr.kind : expr}"
     end

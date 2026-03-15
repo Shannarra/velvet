@@ -46,28 +46,33 @@ module Syntax
       @diagnostics << lexer.diagnostics
     end
 
-    def parse(scope_eof = nil)
-      scope = scope_eof || SyntaxKind::NewlineToken
-
-      puts "Parsing with scope #{scope}, and #{@tokens.count - @ip} tokens left"
-
+    def parse
       expr = parse_expression
-      eof = match(scope)
+      eof = match(SyntaxKind::NewlineToken)
 
       @scope.root.children << SyntaxTree.new(@diagnostics, expr, eof).root
 
-      new_scope = if @tokens.count - @ip == 2
-                    SyntaxKind::EOFToken if current.kind == Constants::Kinds::EOF
-                  else
-                    scope
-                  end
-
+      # test: remove already parsed tokens and reset instruction pointer
       @tokens.shift(@ip)
+      @ip = 0
 
-      parse(new_scope)
+      if @tokens.count == 2
+        # if only 2 tokens left they should be \0\0 (EOF EOF)
+        # assert that, remove them and we're done parsing
+        assert!(@tokens.all? { |token| token.kind == SyntaxKind::EOFToken })
+
+        @tokens.shift(2)
+        return
+      end
+
+      return if @tokens.empty?
+
+      parse
     end
 
     def parse_expression(parent_precedence = 0)
+      return ExpressionSyntax.new(:EOF, []) if @tokens.empty?
+
       left = parse_factor
 
       loop do
@@ -108,9 +113,6 @@ module Syntax
         next_token
         return next_token
       end
-
-      raise StandardError, current if current.kind == SyntaxKind::NewlineToken
-
 
       diagnostics << "Unexpected token <#{current.kind}>. Expected <#{kind}>"
       Token.new(kind, current.position, nil, nil)
