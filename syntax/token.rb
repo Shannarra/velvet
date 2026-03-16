@@ -15,9 +15,9 @@ module Syntax
     end
 
     def print_position
-      col_pos = position.col - (text.length || 0)
+      col_pos = position.col - (text&.length || 0)
 
-      "#{position.row}:#{col_pos}"
+      "#{position.row + 1}:#{col_pos + 1}"
     end
 
     def inspect

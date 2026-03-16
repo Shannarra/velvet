@@ -20,8 +20,10 @@ module Kernel
     puts "[ERROR]: #{text}"
   end
 
-  def assert!(condition)
-    raise "Expectation not met: #{condition}".error! unless condition
+  def assert!(condition, message = nil)
+    message ||= "Expectation not met: #{condition}"
+
+    raise message.error! unless condition
   end
 end
 

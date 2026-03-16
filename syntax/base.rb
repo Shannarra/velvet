@@ -4,7 +4,10 @@ require_relative 'parser'
 require_relative 'node'
 
 module Syntax
+  # !important! BadToken should be taken as a default token type!
   SyntaxKind = enum %w[
+    BadToken
+
     NumberToken
     PlusToken
     MinusToken
@@ -19,8 +22,7 @@ module Syntax
     NumberExpression
     BinaryExpression
 
-    BadToken
-
+    CommentToken
     EOFToken
 
     TabToken
@@ -34,6 +36,7 @@ module Syntax
     module Values
       SPACES = [' ', "\n", "\t"].freeze
       OPERATORS = %w[+ - * ** / ( ) =].freeze
+      COMMENT = '#'
       EOF = '\0'
 
       NON_ALPHA = [*SPACES, *OPERATORS, EOF].freeze
@@ -53,6 +56,7 @@ module Syntax
         SyntaxKind::AssignmentToken
       ].freeze
 
+      COMMENT = SyntaxKind::CommentToken
       EOF = SyntaxKind::EOFToken
 
       NON_ALPHA = [*SPACES, *OPERATORS, EOF].freeze

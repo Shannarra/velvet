@@ -35,15 +35,16 @@ module Syntax
         token = lexer.lex!
         break if token.nil?
 
-        tokens << token unless [SyntaxKind::WhitespaceToken, SyntaxKind::BadToken].include? token.kind
+        tokens << token unless [SyntaxKind::WhitespaceToken].include? token.kind
       end
 
       # append last token IF it's good
       next_tok = lexer.lex!
-      tokens << token unless [SyntaxKind::WhitespaceToken, SyntaxKind::BadToken].include? next_tok.kind
+      tokens << token unless [SyntaxKind::WhitespaceToken].include? next_tok.kind
 
       @tokens = Array(tokens)
       @diagnostics << lexer.diagnostics
+      @diagnostics.flatten!
     end
 
     def parse
@@ -56,23 +57,17 @@ module Syntax
       @tokens.shift(@ip)
       @ip = 0
 
-      if @tokens.count == 2
-        # if only 2 tokens left they should be \0\0 (EOF EOF)
-        # assert that, remove them and we're done parsing
-        assert!(@tokens.all? { |token| token.kind == SyntaxKind::EOFToken })
+      if @tokens.one? # expect to have only EOF left
+        assert!(@tokens.last.kind == SyntaxKind::EOFToken)
 
-        @tokens.shift(2)
+        @tokens.shift(1)
         return
       end
-
-      return if @tokens.empty?
 
       parse
     end
 
     def parse_expression(parent_precedence = 0)
-      return ExpressionSyntax.new(:EOF, []) if @tokens.empty?
-
       left = parse_factor
 
       loop do
@@ -107,6 +102,10 @@ module Syntax
     end
 
     def match(kind)
+      # if line is empty just match both eof & newline
+      return next_token if current.kind == SyntaxKind::EOFToken && kind == SyntaxKind::NewlineToken
+
+      # match expected token if available
       return next_token if current.kind == kind
 
       if [SyntaxKind::TabToken, SyntaxKind::WhitespaceToken].include? current.kind
@@ -114,8 +113,8 @@ module Syntax
         return next_token
       end
 
-      diagnostics << "Unexpected token <#{current.kind}>. Expected <#{kind}>"
-      Token.new(kind, current.position, nil, nil)
+      diagnostics << "Unexpected token <#{current.kind}>. Expected <#{kind}> at #{current.position}"
+      Token.new(current.kind, current.position, nil, nil)
     end
 
     def parse_factor
@@ -148,6 +147,7 @@ module Syntax
       return parse_id if current.kind == SyntaxKind::IdentifierToken
 
       num = match(SyntaxKind::NumberToken)
+
       NumberExpressionSyntax.new(num)
     end
 

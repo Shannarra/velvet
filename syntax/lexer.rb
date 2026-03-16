@@ -16,6 +16,8 @@ module Syntax
     def lex!
       return Token.new(SyntaxKind::EOFToken, @position.dup, '\0', nil) if @ip >= @text.length
 
+      return handle_comment if current == '#'
+
       return handle_numeric if current.numeric?
 
       return handle_whitetext if [' ', "\n", "\t"].include? current
@@ -54,6 +56,14 @@ module Syntax
     end
 
     private
+
+    def handle_comment
+      start = @ip
+      get_next while current != "\n" && current != '\0'
+
+      value = @text[start..(@ip - 1)]
+      Token.new(SyntaxKind::CommentToken, Position.new(@position.row, start), value, value)
+    end
 
     def handle_numeric
       start = @ip
