@@ -80,8 +80,6 @@ def compile_and_execute(file)
 
   tree = Syntax::SyntaxTree.parse(contents)
 
-  pretty_print_tree(tree.root)
-
   if tree.diagnostics.flatten.any?
     print_diagnostics(tree)
   else
