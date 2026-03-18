@@ -47,24 +47,19 @@ module Syntax
       @diagnostics.flatten!
     end
 
-    def parse
+    def parse!
       expr = parse_expression
-      eof = match(SyntaxKind::NewlineToken)
 
-      @scope.root.children << SyntaxTree.new(@diagnostics, expr, eof).root
+      eof = match(SyntaxKind::EOFToken)
 
-      # test: remove already parsed tokens and reset instruction pointer
+      @scope.root.children << SyntaxTree.new(@diagnostics, expr, eof)
+
+      return unless eof.kind == SyntaxKind::NewlineToken
+
       @tokens.shift(@ip)
       @ip = 0
 
-      if @tokens.one? # expect to have only EOF left
-        assert!(@tokens.last.kind == SyntaxKind::EOFToken)
-
-        @tokens.shift(1)
-        return
-      end
-
-      parse
+      parse!
     end
 
     def parse_expression(parent_precedence = 0)
@@ -106,12 +101,15 @@ module Syntax
       return next_token if current.kind == SyntaxKind::EOFToken && kind == SyntaxKind::NewlineToken
 
       # match expected token if available
-      return next_token if current.kind == kind
+      # skip over newline token
+      return next_token if [SyntaxKind::NewlineToken, kind].include? current.kind
 
-      if [SyntaxKind::TabToken, SyntaxKind::WhitespaceToken].include? current.kind
+      if [SyntaxKind::TabToken, SyntaxKind::WhitespaceToken, SyntaxKind::CommentToken].include? current.kind
         next_token
         return next_token
       end
+
+      puts diagnostics unless diagnostics.empty?
 
       diagnostics << "Unexpected token <#{current.kind}>. Expected <#{kind}> at #{current.position}"
       Token.new(current.kind, current.position, nil, nil)

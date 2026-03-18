@@ -67,7 +67,9 @@ def repl_loop(show_tree)
     if tree.diagnostics.flatten.any?
       print_diagnostics(tree)
     else
-      evaluate_expression(tree, variables)
+      tree.root.children.each do |sub|
+        evaluate_expression(sub, variables)
+      end
     end
   end
 end
@@ -83,7 +85,9 @@ def compile_and_execute(file)
   if tree.diagnostics.flatten.any?
     print_diagnostics(tree)
   else
-    evaluate_expression(tree, variables)
+    tree.root.children.each do |sub|
+      evaluate_expression(sub, variables)
+    end
   end
 
   exit

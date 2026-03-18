@@ -57,7 +57,7 @@ module Syntax
 
       return evaluate_expr! expr.expression if expr.is_a? ParenthesizedExpressionSyntax
 
-      if expr.is_a? GlobalScope
+      if expr.is_a?(GlobalScope)
         results = expr.children.map do |subtree|
           evaluate_expr! subtree
         end
@@ -65,7 +65,7 @@ module Syntax
         return results.last
       end
 
-      diagnostics << "Unexpected node #{expr.is_a?(Token) ? expr.kind : expr}"
+      diagnostics << "Unexpected node \"#{expr.is_a?(Token) ? expr.kind : expr}\""
     end
   end
 end

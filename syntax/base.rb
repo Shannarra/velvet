@@ -81,7 +81,9 @@ module Syntax
         global_scope = SyntaxTree.global_scope
 
         parser = Parser.new(text, global_scope)
-        parser.parse
+        parser.parse!
+
+        puts parser.diagnostics unless parser.diagnostics.empty?
 
         global_scope
       end
