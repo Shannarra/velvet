@@ -88,6 +88,8 @@ def compile_and_execute(file)
     tree.root.children.each do |sub|
       evaluate_expression(sub, variables)
     end
+
+ #   Syntax::Evaluator.eval_tree! tree, variables
   end
 
   exit

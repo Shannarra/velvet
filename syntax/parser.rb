@@ -50,11 +50,11 @@ module Syntax
     def parse!
       expr = parse_expression
 
-      eof = match(SyntaxKind::EOFToken)
+      eof = match(SyntaxKind::IdentifierToken)
 
       @scope.root.children << SyntaxTree.new(@diagnostics, expr, eof)
 
-      return unless eof.kind == SyntaxKind::NewlineToken
+      binding.pry unless eof.kind == SyntaxKind::NewlineToken
 
       @tokens.shift(@ip)
       @ip = 0
@@ -98,21 +98,23 @@ module Syntax
 
     def match(kind)
       # if line is empty just match both eof & newline
-      return next_token if current.kind == SyntaxKind::EOFToken && kind == SyntaxKind::NewlineToken
+#      return next_token if current.kind == SyntaxKind::EOFToken && kind == SyntaxKind::NewlineToken
+
+      return current if current.kind == SyntaxKind::EOFToken
 
       # match expected token if available
       # skip over newline token
-      return next_token if [SyntaxKind::NewlineToken, kind].include? current.kind
+      return next_token if [kind, SyntaxKind::NewlineToken].include? current.kind
 
       if [SyntaxKind::TabToken, SyntaxKind::WhitespaceToken, SyntaxKind::CommentToken].include? current.kind
         next_token
         return next_token
       end
 
-      puts diagnostics unless diagnostics.empty?
+      puts "[DIAGNOSTICS]:\n\n#{diagnostics}\n\n" unless diagnostics.empty?
 
       diagnostics << "Unexpected token <#{current.kind}>. Expected <#{kind}> at #{current.position}"
-      Token.new(current.kind, current.position, nil, nil)
+      Token.new(SyntaxKind::BadToken, current.position, nil, nil)
     end
 
     def parse_factor
@@ -142,11 +144,14 @@ module Syntax
         return ParenthesizedExpressionSyntax.new(left, expr, right)
       end
 
-      return parse_id if current.kind == SyntaxKind::IdentifierToken
+      if current.kind == SyntaxKind::NumberToken
+        num = match(SyntaxKind::NumberToken)
+        return NumberExpressionSyntax.new(num)
+      end
 
-      num = match(SyntaxKind::NumberToken)
+      return if current.kind == SyntaxKind::NewlineToken
 
-      NumberExpressionSyntax.new(num)
+      parse_id
     end
 
     def parse_id
@@ -156,7 +161,7 @@ module Syntax
 
       if current.kind == SyntaxKind::AssignmentToken
         _assignment_op = match(SyntaxKind::AssignmentToken)
-        right = parse_expression # match(SyntaxKind::NumberToken) # parse_expression
+        right = parse_expression
 
         return AssignmentExpressionSyntax.new(id, right)
       end

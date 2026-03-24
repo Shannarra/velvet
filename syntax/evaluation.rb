@@ -14,11 +14,26 @@ module Syntax
       evaluate_expr! @root
     end
 
+    def self.eval_tree!(tree, variables)
+      diagnostics = []
+      tree.root.children.each do |sub|
+        ev = new(sub.root, variables)
+
+        ev.eval!
+
+        diagnostics << ev.diagnostics
+      end
+
+      diagnostics
+    end
+
     private
 
     def evaluate_expr!(expr)
       if expr.is_a? NumberExpressionSyntax
         value = expr.token.value
+
+        binding.pry if expr.token.kind == SyntaxKind::NewlineToken
 
         return expr.is_integer ? Integer(value) : Float(value)
       end
@@ -27,7 +42,7 @@ module Syntax
         return @variables[expr.id.value] if @variables.keys.include? expr.id.value
 
         diagnostics << "Unknown variable \"#{expr.id.value}\" at #{expr.id.print_position}"
-        raise
+        raise diagnostics.last
       end
 
       if expr.is_a? AssignmentExpressionSyntax

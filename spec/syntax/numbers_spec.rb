@@ -20,8 +20,8 @@ RSpec.describe 'Testing numbers', type: :feature do
 
     describe 'and have valid number types' do
       before do
-        @int_tree = @int_parser.parse
-        @float_tree = @float_parser.parse
+        @int_tree = @int_parser.parse!
+        @float_tree = @float_parser.parse!
       end
 
       it 'by constructing valid trees' do
@@ -41,25 +41,31 @@ RSpec.describe 'Testing numbers', type: :feature do
         end
 
         it 'have correct types for integers' do
-          expect(@int_root.is_a?(Syntax::ExpressionSyntax)).to be true
-          expect(@int_root.is_a?(Syntax::NumberExpressionSyntax)).to be true
-          expect(@int_root.token.kind).to eq Syntax::SyntaxKind::NumberToken
-          expect(@int_root.is_integer).to be true
+          expression = @int_root.children.first.root
+
+          expect(expression.is_a?(Syntax::ExpressionSyntax)).to be true
+          expect(expression.is_a?(Syntax::NumberExpressionSyntax)).to be true
+          expect(expression.token.kind).to eq Syntax::SyntaxKind::NumberToken
+          expect(expression.is_integer).to be true
         end
 
         it 'have correct types for floats' do
-          expect(@float_root.is_a?(Syntax::ExpressionSyntax)).to be true
-          expect(@float_root.is_a?(Syntax::NumberExpressionSyntax)).to be true
-          expect(@float_root.token.kind).to eq Syntax::SyntaxKind::NumberToken
-          expect(@float_root.is_integer).to be false
+          expression = @float_root.children.first.root
+
+          expect(expression.is_a?(Syntax::ExpressionSyntax)).to be true
+          expect(expression.is_a?(Syntax::NumberExpressionSyntax)).to be true
+          expect(expression.token.kind).to eq Syntax::SyntaxKind::NumberToken
+          expect(expression.is_integer).to be false
         end
 
         it 'have correct INT value' do
-          expect(@int_root.token.value).to eq @int_test_value
+          # GlobalScope>[SyntaxTree>Token]
+          expect(@int_root.children.first.root.token.value).to eq @int_test_value
         end
 
         it 'have correct FLOAT value' do
-          expect(@float_root.token.value).to eq @float_test_value
+          # GlobalScope>[SyntaxTree>Token]
+          expect(@float_root.children.first.root.token.value).to eq @float_test_value
         end
       end
     end
@@ -79,16 +85,16 @@ RSpec.describe 'Testing numbers', type: :feature do
       end
 
       it 'adds correctly' do
-        expect(@eval.call(@operation.call('+'))).to eq @num1 + @num2
+        expect(@eval.call(@operation.call('+').children.first.root)).to eq @num1 + @num2
       end
       it 'subtracts correctly' do
-        expect(@eval.call(@operation.call('-'))).to eq @num1 - @num2
+        expect(@eval.call(@operation.call('-').children.first.root)).to eq @num1 - @num2
       end
       it 'multiplies correctly' do
-        expect(@eval.call(@operation.call('*'))).to eq @num1 * @num2
+        expect(@eval.call(@operation.call('*').children.first.root)).to eq @num1 * @num2
       end
       it 'divides correctly' do
-        expect(@eval.call(@operation.call('/'))).to eq @num1 / @num2
+        expect(@eval.call(@operation.call('/').children.first.root)).to eq @num1 / @num2
       end
     end
 
@@ -110,7 +116,7 @@ RSpec.describe 'Testing numbers', type: :feature do
           result_tree = Syntax::SyntaxTree.parse(text)
           throw result_tree.diagnostics.join unless result_tree.diagnostics.empty? # prevent unexpected characters
 
-          expect(@eval.call(result_tree.root)).to be value
+          expect(@eval.call(result_tree.root.children.first.root)).to be value
         end
       end
     end
