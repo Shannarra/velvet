@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-RSpec.describe 'Testing variables', type: :feature do
+RSpec.describe 'Testing variables', type: :feature do # rubocop:disable Metrics/BlockLength
   let(:evaluator) { Syntax::Evaluator }
   let(:variables) { {} }
 

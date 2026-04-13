@@ -110,8 +110,6 @@ module Syntax
     def match(kind)
       return next_token if current.kind == kind
 
-#      return next_token if current.kind == SyntaxKind::CommentToken
-
       if [SyntaxKind::TabToken, SyntaxKind::WhitespaceToken].include? current.kind
         next_token
         return next_token
@@ -154,10 +152,9 @@ module Syntax
       when SyntaxKind::NumberToken
         num = match(SyntaxKind::NumberToken)
         NumberExpressionSyntax.new(num)
-      when SyntaxKind::NewlineToken then VoidExpressionSyntax.new(current.kind)
-      when SyntaxKind::IdentifierToken then parse_id
-      when SyntaxKind::CommentToken
+      when SyntaxKind::NewlineToken, SyntaxKind::CommentToken
         VoidExpressionSyntax.new(current.kind)
+      when SyntaxKind::IdentifierToken then parse_id
       else
         raise "Unhandled token #{current.kind} found at line #{current.position.row}"
       end
