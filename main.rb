@@ -89,7 +89,7 @@ def compile_and_execute(file)
       evaluate_expression(sub, variables)
     end
 
- #   Syntax::Evaluator.eval_tree! tree, variables
+    Syntax::Evaluator.eval_tree! tree, variables
   end
 
   exit

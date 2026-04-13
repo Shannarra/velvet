@@ -124,7 +124,6 @@ module Syntax
       @text[@ip]
     end
 
-    # rubocop:disable Naming/AccessorMethodName
     def get_next(forward_step = 1)
       if current == "\n"
         @position.nextline!
@@ -134,6 +133,5 @@ module Syntax
 
       @ip += 1
     end
-    # rubocop:enable Naming/AccessorMethodName
   end
 end
