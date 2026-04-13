@@ -93,7 +93,7 @@ RSpec.describe 'Testing variables', type: :feature do
     it 'errors but does not kill the process' do
       expect do
         @eval.call(Syntax::SyntaxTree.parse(text_using_nonexistent_var), variables)
-      end.to raise_error(RuntimeError, 'Unknown variable "a" at 1:10')
+      end.to raise_error(RuntimeError, 'Unknown variable "a" on line 1')
     end
   end
 end

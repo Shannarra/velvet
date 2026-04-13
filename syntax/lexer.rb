@@ -3,7 +3,7 @@
 require_relative 'token'
 
 module Syntax
-  class Lexer
+  class Lexer # rubocop:disable Syntax/ClassLength
     attr_reader :diagnostics
 
     def initialize(text)
@@ -102,9 +102,10 @@ module Syntax
         initial = current
         start = @ip
 
-        get_next while current == initial
+        get_next(2) while current == initial
         text = @text[start..@ip]
-        Token.new(SyntaxKind::NewlineToken, @position.nextline!.dup, text, nil)
+
+        Token.new(SyntaxKind::NewlineToken, @position.dup, text, nil)
       when "\t"
         initial = current
         start = @ip
@@ -124,8 +125,13 @@ module Syntax
     end
 
     # rubocop:disable Naming/AccessorMethodName
-    def get_next
-      @position.move_forward!(1)
+    def get_next(forward_step = 1)
+      if current == "\n"
+        @position.nextline!
+      else
+        @position.move_forward!(forward_step)
+      end
+
       @ip += 1
     end
     # rubocop:enable Naming/AccessorMethodName

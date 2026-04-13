@@ -33,15 +33,13 @@ module Syntax
       if expr.is_a? NumberExpressionSyntax
         value = expr.token.value
 
-        binding.pry if expr.token.kind == SyntaxKind::NewlineToken
-
         return expr.is_integer ? Integer(value) : Float(value)
       end
 
       if expr.is_a? IdentifierExpressionSyntax
         return @variables[expr.id.value] if @variables.keys.include? expr.id.value
 
-        diagnostics << "Unknown variable \"#{expr.id.value}\" at #{expr.id.print_position}"
+        diagnostics << "Unknown variable \"#{expr.id.value}\" on line #{expr.id.position.row + 1}"
         raise diagnostics.last
       end
 

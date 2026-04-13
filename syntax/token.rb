@@ -14,12 +14,6 @@ module Syntax
       @value = value
     end
 
-    def print_position
-      col_pos = position.col - (text&.length || 0)
-
-      "#{position.row + 1}:#{col_pos + 1}"
-    end
-
     def inspect
       "<Token:#{kind}, text = \"#{text}\" (value \"#{value}\") at #{print_position}>"
     end
