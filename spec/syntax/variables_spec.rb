@@ -55,7 +55,6 @@ RSpec.describe 'Testing variables', type: :feature do
         tree = Syntax::SyntaxTree.parse(text_with_many_variables)
         @eval.call(tree, variables)
 
-        binding.pry
         expect(variables['nice']).to eq(69)
 
         # make sure that the previous example's variables are not affecting the current one

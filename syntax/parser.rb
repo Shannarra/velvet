@@ -50,16 +50,23 @@ module Syntax
     def parse!
       expr = parse_expression
 
-      eof = match(SyntaxKind::IdentifierToken)
+      if current.kind == SyntaxKind::NewlineToken
+        store_expression(expr)
+        next_token
 
-      @scope.root.children << SyntaxTree.new(@diagnostics, expr, eof)
+        return parse!
+      end
 
-      binding.pry unless eof.kind == SyntaxKind::NewlineToken
+      # Store the last evaluated expression in the tree
+      store_expression(expr)
 
-      @tokens.shift(@ip)
-      @ip = 0
+      # And parse the last few tokens if any left
+      if @tokens.count - 2 != @ip
+        final_expr = parse_expression
+        store_expression(final_expr)
+      end
 
-      parse!
+      match(SyntaxKind::EOFToken)
     end
 
     def parse_expression(parent_precedence = 0)
@@ -79,6 +86,10 @@ module Syntax
 
     private
 
+    def store_expression(root, eof_token = current)
+      @scope.root.children << SyntaxTree.new(@diagnostics, root, eof_token)
+    end
+
     def peek(offset = 1)
       id = @ip + offset
       return @tokens[-1] if id >= @tokens.count
@@ -97,14 +108,7 @@ module Syntax
     end
 
     def match(kind)
-      # if line is empty just match both eof & newline
-#      return next_token if current.kind == SyntaxKind::EOFToken && kind == SyntaxKind::NewlineToken
-
-      return current if current.kind == SyntaxKind::EOFToken
-
-      # match expected token if available
-      # skip over newline token
-      return next_token if [kind, SyntaxKind::NewlineToken].include? current.kind
+      return next_token if current.kind == kind
 
       if [SyntaxKind::TabToken, SyntaxKind::WhitespaceToken, SyntaxKind::CommentToken].include? current.kind
         next_token
