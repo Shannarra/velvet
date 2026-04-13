@@ -15,7 +15,7 @@ module Syntax
     end
 
     def inspect
-      "<Token:#{kind}, text = \"#{text}\" (value \"#{value}\") at #{print_position}>"
+      "<Token:#{kind}, text = \"#{text}\" (value \"#{value}\") at #{position}>"
     end
 
     def to_s

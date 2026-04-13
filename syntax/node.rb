@@ -32,6 +32,12 @@ module Syntax
     end
   end
 
+  class VoidExpressionSyntax < ExpressionSyntax
+    def initialize(kind)
+      super(kind, [])
+    end
+  end
+
   class BinaryExpressionSyntax < ExpressionSyntax
     attr_reader :left, :operator, :right
 

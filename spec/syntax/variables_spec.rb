@@ -85,7 +85,7 @@ RSpec.describe 'Testing variables', type: :feature do
     end
   end
 
-  context 'when using variables' do
+  context 'when using variables that do not exist' do
     let(:text_using_nonexistent_var) do
       'result = a + 69'
     end
@@ -96,4 +96,52 @@ RSpec.describe 'Testing variables', type: :feature do
       end.to raise_error(RuntimeError, 'Unknown variable "a" on line 1')
     end
   end
+
+  shared_examples 'commented expressions with result = 69' do
+    it 'ignores the comment and produces the correct result' do
+      @eval.call(Syntax::SyntaxTree.parse(text_with_comments), variables)
+
+      expect(variables['result']).to eq 69
+    end
+  end
+
+  context 'when using comments on newlines' do
+    let(:text_with_comments) do
+      <<~TEXT
+        a = 34
+        b = 35
+        # result should be 69
+        result = a + b
+      TEXT
+    end
+
+    it_behaves_like 'commented expressions with result = 69'
+  end
+
+  context 'when using comments inlined' do
+    let(:text_with_comments) do
+      <<~TEXT
+        a = 34
+        b = 35 # result should be 69
+        result = a + b
+      TEXT
+    end
+
+    it_behaves_like 'commented expressions with result = 69'
+  end
+
+  # context 'when using inlined comments on multiline expressions' do
+  #   let(:text_with_comments) do
+  #     <<~TEXT
+  #       a = 17 *
+  #           # comment in the middle of multiline expression
+
+  #                   * 2
+  #       b = 35
+  #       result = a + b
+  #     TEXT
+  #   end
+
+  #   it_behaves_like 'commented expressions with result = 69'
+  # end
 end

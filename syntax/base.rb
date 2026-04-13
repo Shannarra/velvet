@@ -59,6 +59,8 @@ module Syntax
       COMMENT = SyntaxKind::CommentToken
       EOF = SyntaxKind::EOFToken
 
+      VOID = [SyntaxKind::NewlineToken, COMMENT].freeze
+
       NON_ALPHA = [*SPACES, *OPERATORS, EOF].freeze
     end
   end

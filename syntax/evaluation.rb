@@ -78,7 +78,11 @@ module Syntax
         return results.last
       end
 
+      return if expr.is_a? VoidExpressionSyntax
+
       diagnostics << "Unexpected node \"#{expr.is_a?(Token) ? expr.kind : expr}\""
+
+      raise @diagnostics.last
     end
   end
 end

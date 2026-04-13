@@ -50,7 +50,7 @@ module Syntax
     def parse!
       expr = parse_expression
 
-      if current.kind == SyntaxKind::NewlineToken
+      if Constants::Kinds::VOID.include?(current.kind)
         store_expression(expr)
         next_token
 
@@ -110,7 +110,9 @@ module Syntax
     def match(kind)
       return next_token if current.kind == kind
 
-      if [SyntaxKind::TabToken, SyntaxKind::WhitespaceToken, SyntaxKind::CommentToken].include? current.kind
+#      return next_token if current.kind == SyntaxKind::CommentToken
+
+      if [SyntaxKind::TabToken, SyntaxKind::WhitespaceToken].include? current.kind
         next_token
         return next_token
       end
@@ -148,14 +150,17 @@ module Syntax
         return ParenthesizedExpressionSyntax.new(left, expr, right)
       end
 
-      if current.kind == SyntaxKind::NumberToken
+      case current.kind
+      when SyntaxKind::NumberToken
         num = match(SyntaxKind::NumberToken)
-        return NumberExpressionSyntax.new(num)
+        NumberExpressionSyntax.new(num)
+      when SyntaxKind::NewlineToken then VoidExpressionSyntax.new(current.kind)
+      when SyntaxKind::IdentifierToken then parse_id
+      when SyntaxKind::CommentToken
+        VoidExpressionSyntax.new(current.kind)
+      else
+        raise "Unhandled token #{current.kind} found at line #{current.position.row}"
       end
-
-      return if current.kind == SyntaxKind::NewlineToken
-
-      parse_id
     end
 
     def parse_id
