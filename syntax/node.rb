@@ -30,6 +30,11 @@ module Syntax
       super
       @children = children
     end
+
+    def debug_print!
+      pretty_print_tree self
+      nil
+    end
   end
 
   class VoidExpressionSyntax < ExpressionSyntax

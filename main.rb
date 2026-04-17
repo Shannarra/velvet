@@ -18,31 +18,13 @@ def print_help
   TEXT
 end
 
-def pretty_print_tree(root, indent = '', is_last: true)
-  marker = is_last ? '└───' : '├───'
-
-  root = root.root if root.is_a?(Syntax::SyntaxTree)
-
-  print "#{indent}#{marker}#{root.kind}"
-
-  print " #{root.value}" if root.is_a?(Syntax::Token) && !root.value.nil?
-  puts ''
-
-  indent += is_last ? '    ' : '│   '
-  last_child = root.children[-1]
-
-  root.children do |child|
-    pretty_print_tree(child, indent, is_last: child == last_child)
-  end
-end
-
 def evaluate_expression(tree, variables = {})
   evaluator = Syntax::Evaluator.new(tree.root, variables)
 
   # print the evaluation of each line:
 
-  # res = evaluator.eval!
-  # puts res
+  res = evaluator.eval!
+  puts res
 rescue RuntimeError
   print_diagnostics(evaluator)
 end
@@ -98,10 +80,6 @@ def compile_and_execute(file, show_tree)
   if tree.diagnostics.flatten.any?
     print_diagnostics(tree)
   else
-    tree.root.children.each do |sub|
-      evaluate_expression(sub, variables)
-    end
-
     Syntax::Evaluator.eval_tree! tree, variables
   end
 

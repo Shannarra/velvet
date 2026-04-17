@@ -41,3 +41,21 @@ class String
     "[ERROR]: #{self}"
   end
 end
+
+def pretty_print_tree(root, indent = '', is_last: true)
+  marker = is_last ? '└───' : '├───'
+
+  root = root.root if root.is_a?(Syntax::SyntaxTree)
+
+  print "#{indent}#{marker}#{root.kind}"
+
+  print " #{root.value}" if root.is_a?(Syntax::Token) && !root.value.nil?
+  puts ''
+
+  indent += is_last ? '    ' : '│   '
+  last_child = root.children[-1]
+
+  root.children do |child|
+    pretty_print_tree(child, indent, is_last: child == last_child)
+  end
+end
