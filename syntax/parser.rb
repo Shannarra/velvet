@@ -14,16 +14,18 @@ module Syntax
     end
   end
 
-  class Parser
+  class Parser # rubocop:disable Metrics/ClassLength
     include ParsingHelpers
 
     attr_reader :diagnostics
 
-    def initialize(text)
+    def initialize(text, scope)
       @text = text
       @tokens = []
       @diagnostics = []
       @ip = 0
+
+      @scope = scope
 
       tokens = []
       lexer = Lexer.new(text)
@@ -33,22 +35,26 @@ module Syntax
         token = lexer.lex!
         break if token.nil?
 
-        tokens << token unless [SyntaxKind::WhitespaceToken, SyntaxKind::BadToken].include? token.kind
+        tokens << token unless Constants::Kinds::VOID.include? token.kind
       end
 
       # append last token IF it's good
       next_tok = lexer.lex!
-      tokens << token unless [SyntaxKind::WhitespaceToken, SyntaxKind::BadToken].include? next_tok.kind
+      tokens << token unless Constants::Kinds::VOID.include? next_tok.kind
 
       @tokens = Array(tokens)
       @diagnostics << lexer.diagnostics
+      @diagnostics.flatten!
     end
 
-    def parse
+    def parse!
       expr = parse_expression
-      eof = match(SyntaxKind::EOFToken)
+      store_expression(expr)
 
-      SyntaxTree.new(@diagnostics, expr, eof)
+      # recursive decent until EOF reached
+      return parse! unless current.kind == SyntaxKind::EOFToken
+
+      match(SyntaxKind::EOFToken)
     end
 
     def parse_expression(parent_precedence = 0)
@@ -68,9 +74,13 @@ module Syntax
 
     private
 
+    def store_expression(root, eof_token = current)
+      @scope.root.children << SyntaxTree.new(@diagnostics, root, eof_token)
+    end
+
     def peek(offset = 1)
       id = @ip + offset
-      return tokens[-1] if id >= @tokens.count
+      return @tokens[-1] if id >= @tokens.count
 
       @tokens[id]
     end
@@ -87,10 +97,9 @@ module Syntax
 
     def match(kind)
       return next_token if current.kind == kind
-      return next_token if [SyntaxKind::NewlineToken, SyntaxKind::TabToken, SyntaxKind::WhitespaceToken].include? current.kind
 
-      diagnostics << "Unexpected token <#{current.kind}>. Expected <#{kind}>"
-      Token.new(kind, current.position, nil, nil)
+      diagnostics << "Unexpected token <#{current.kind}>. Expected <#{kind}> at #{current.position}"
+      Token.new(SyntaxKind::BadToken, current.position, nil, nil)
     end
 
     def parse_factor
@@ -113,17 +122,14 @@ module Syntax
     end
 
     def parse_primary_expr
-      if current.kind == SyntaxKind::OpenParenthesisToken
-        left = next_token
-        expr = parse_expression
-        right = match(SyntaxKind::CloseParenthesisToken)
-        return ParenthesizedExpressionSyntax.new(left, expr, right)
+      case current.kind
+      when SyntaxKind::OpenParenthesisToken then parse_parenthesized
+      when SyntaxKind::NumberToken then NumberExpressionSyntax.new(next_token)
+      when SyntaxKind::IdentifierToken then parse_id
+      else
+        prev = peek(-1)
+        raise "Unexpected token \"#{prev.value}\" (#{prev.kind}) found at #{prev.start_printing_position}"
       end
-
-      return parse_id if current.kind == SyntaxKind::IdentifierToken
-
-      num = match(SyntaxKind::NumberToken)
-      NumberExpressionSyntax.new(num)
     end
 
     def parse_id
@@ -131,12 +137,19 @@ module Syntax
 
       if current.kind == SyntaxKind::AssignmentToken
         _assignment_op = match(SyntaxKind::AssignmentToken)
-        right = parse_expression # match(SyntaxKind::NumberToken) # parse_expression
+        right = parse_expression
 
         return AssignmentExpressionSyntax.new(id, right)
       end
 
       IdentifierExpressionSyntax.new(id)
+    end
+
+    def parse_parenthesized
+      left = next_token
+      expr = parse_expression
+      right = match(SyntaxKind::CloseParenthesisToken)
+      ParenthesizedExpressionSyntax.new(left, expr, right)
     end
   end
 end

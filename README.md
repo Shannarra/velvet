@@ -3,6 +3,69 @@ A Ruby-inspired programming language made for fun. No llms used.
 
 
 ### Examples
+Run an example by passing a file:
+```console
+ruby main.rb ./examples/numbers.vv
+-277695.63956043957
+```
+
+File contents:
+```
+$ cat ./examples/numbers.vv
+
+# this is a comment
+
+
+# comments are entirely ignored
+
+
+# expressions can span many lines and have as much whitespace as needed
+thirty_seven			= 5*10-(
+8*                    6
+         -15
+																						)
++4*      20/4
+
+
+
+
+
+
+
+n_nineteen				= 3*(4**2)+8-(
+																(
+																	11 +
+																		 # comments could also be within an expression - they are all ignored
+																	4
+																	
+																	)**2
+
+																)/3
+
+
+fifty_six					= 7*9+3-6/2+2*2-11
+
+
+
+
+
+two								= 11+3-7*2+1*4/2
+n_fifty_one				= 12/(1+3)-9*6  # comments could also be at EOL
+neg_277k					= 2+2+2+22+2+2*954-6**7+3/65
+
+
+
+
+two_seventy_seven = ((11*22+33-44)**5)/((6**7)*8+9**9)*(69/420.0)
+result						= thirty_seven + n_nineteen + fifty_six
+									# this is another ignored comment
+																 	 						+ two + n_fifty_one + neg_277k + two_seventy_seven # * 0
+
+
+```
+
+
+
 You can run the program to evaluate a single expression:
 ```console
 ruby main.rb

@@ -4,9 +4,11 @@ require_relative 'parser'
 require_relative 'node'
 
 module Syntax
+  # !important! BadToken should be taken as a default token type!
   SyntaxKind = enum %w[
+    BadToken
+
     NumberToken
-    WhitespaceToken
     PlusToken
     MinusToken
     StarToken
@@ -14,24 +16,50 @@ module Syntax
     SlashToken
     OpenParenthesisToken
     CloseParenthesisToken
-    BadToken
-    EOFToken
+    AssignmentToken
+
+    ParenthesizedExpression
     NumberExpression
     BinaryExpression
-    ParenthesizedExpression
 
-    NewlineToken
+    CommentToken
+    EOFToken
+
     TabToken
+    NewlineToken
+    WhitespaceToken
 
-    AssignmentToken
     IdentifierToken
   ]
 
   module Constants
     module Values
       SPACES = [' ', "\n", "\t"].freeze
-      OPERATORS = %w[+ - * / ( ) =].freeze
+      OPERATORS = %w[+ - * ** / ( ) =].freeze
+      COMMENT = '#'
       EOF = '\0'
+
+      NON_ALPHA = [*SPACES, *OPERATORS, EOF].freeze
+    end
+
+    module Kinds
+      SPACES = [SyntaxKind::TabToken, SyntaxKind::NewlineToken, SyntaxKind::WhitespaceToken].freeze
+
+      OPERATORS = [
+        SyntaxKind::PlusToken,
+        SyntaxKind::MinusToken,
+        SyntaxKind::StarToken,
+        SyntaxKind::DoubleStarToken,
+        SyntaxKind::SlashToken,
+        SyntaxKind::OpenParenthesisToken,
+        SyntaxKind::CloseParenthesisToken,
+        SyntaxKind::AssignmentToken
+      ].freeze
+
+      COMMENT = SyntaxKind::CommentToken
+      EOF = SyntaxKind::EOFToken
+
+      VOID = [*SPACES, COMMENT].freeze
 
       NON_ALPHA = [*SPACES, *OPERATORS, EOF].freeze
     end
@@ -47,10 +75,19 @@ module Syntax
     end
 
     class << self
-      def parse(text)
-        parser = Parser.new(text)
+      def global_scope
+        SyntaxTree.new([], GlobalScope.new, '\0')
+      end
 
-        parser.parse
+      def parse(text)
+        global_scope = SyntaxTree.global_scope
+
+        parser = Parser.new(text, global_scope)
+        parser.parse!
+
+        puts parser.diagnostics unless parser.diagnostics.empty?
+
+        global_scope
       end
     end
   end

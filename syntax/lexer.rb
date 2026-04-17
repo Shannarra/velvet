@@ -3,7 +3,7 @@
 require_relative 'token'
 
 module Syntax
-  class Lexer
+  class Lexer # rubocop:disable Syntax/ClassLength
     attr_reader :diagnostics
 
     def initialize(text)
@@ -15,6 +15,8 @@ module Syntax
 
     def lex!
       return Token.new(SyntaxKind::EOFToken, @position.dup, '\0', nil) if @ip >= @text.length
+
+      return handle_comment if current == '#'
 
       return handle_numeric if current.numeric?
 
@@ -55,6 +57,14 @@ module Syntax
 
     private
 
+    def handle_comment
+      start = @ip
+      get_next while current != "\n" && current != '\0'
+
+      value = @text[start..(@ip - 1)]
+      Token.new(SyntaxKind::CommentToken, Position.new(@position.row, start), value, value)
+    end
+
     def handle_numeric
       start = @ip
 
@@ -92,9 +102,10 @@ module Syntax
         initial = current
         start = @ip
 
-        get_next while current == initial
+        get_next(2) while current == initial
         text = @text[start..@ip]
-        Token.new(SyntaxKind::NewlineToken, @position.nextline!, text, nil)
+
+        Token.new(SyntaxKind::NewlineToken, @position.dup, text, nil)
       when "\t"
         initial = current
         start = @ip
@@ -113,11 +124,14 @@ module Syntax
       @text[@ip]
     end
 
-    # rubocop:disable Naming/AccessorMethodName
-    def get_next
-      @position.move_forward!(1)
+    def get_next(forward_step = 1)
+      if current == "\n"
+        @position.nextline!
+      else
+        @position.move_forward!(forward_step)
+      end
+
       @ip += 1
     end
-    # rubocop:enable Naming/AccessorMethodName
   end
 end

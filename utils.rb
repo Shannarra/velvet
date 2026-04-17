@@ -19,6 +19,12 @@ module Kernel
   def eputs(text)
     puts "[ERROR]: #{text}"
   end
+
+  def assert!(condition, message = nil)
+    message ||= "Expectation not met: #{condition}"
+
+    raise message.error! unless condition
+  end
 end
 
 class String

@@ -14,6 +14,19 @@ module Syntax
       evaluate_expr! @root
     end
 
+    def self.eval_tree!(tree, variables)
+      diagnostics = []
+      tree.root.children.each do |sub|
+        ev = new(sub.root, variables)
+
+        ev.eval!
+
+        diagnostics << ev.diagnostics
+      end
+
+      diagnostics
+    end
+
     private
 
     def evaluate_expr!(expr)
@@ -24,12 +37,10 @@ module Syntax
       end
 
       if expr.is_a? IdentifierExpressionSyntax
-        unless @variables.keys.include? expr.id.value
-          diagnostics << "Unknown variable \"#{expr.id.value}\" at #{expr.id.print_position}"
-          return
-        end
+        return @variables[expr.id.value] if @variables.keys.include? expr.id.value
 
-        return @variables[expr.id.value]
+        diagnostics << "Unknown variable \"#{expr.id.value}\" on line #{expr.id.position.row + 1}"
+        raise diagnostics.last
       end
 
       if expr.is_a? AssignmentExpressionSyntax
@@ -59,7 +70,17 @@ module Syntax
 
       return evaluate_expr! expr.expression if expr.is_a? ParenthesizedExpressionSyntax
 
-      diagnostics << "Unexpected node #{expr.is_a?(Token) ? expr.kind : expr}"
+      if expr.is_a?(GlobalScope)
+        results = expr.children.map do |subtree|
+          evaluate_expr! subtree
+        end
+
+        return results.last
+      end
+
+      diagnostics << "Unexpected node \"#{expr.is_a?(Token) ? expr.kind : expr}\""
+
+      raise @diagnostics.last
     end
   end
 end

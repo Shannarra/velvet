@@ -14,14 +14,14 @@ module Syntax
       @value = value
     end
 
-    def print_position
-      col_pos = position.col - (text.length || 0)
+    def start_printing_position
+      col = position.col - text.length
 
-      "#{position.row}:#{col_pos}"
+      "#{position.row + 1}:#{col}"
     end
 
     def inspect
-      "<Token:#{kind}, text = \"#{text}\" (value \"#{value}\") at #{print_position}>"
+      "<Token:#{kind}, text = \"#{text}\" (value \"#{value}\") at #{position}>"
     end
 
     def to_s
@@ -54,7 +54,7 @@ module Syntax
     end
 
     def inspect
-      "#{@row}:#{@col}"
+      "#{@row + 1}:#{@col}"
     end
   end
 end

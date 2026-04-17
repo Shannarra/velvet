@@ -2,12 +2,12 @@
 
 require 'spec_helper'
 
-RSpec.describe 'Testing variables', type: :feature do
+RSpec.describe 'Testing variables', type: :feature do # rubocop:disable Metrics/BlockLength
   let(:evaluator) { Syntax::Evaluator }
   let(:variables) { {} }
 
   before do
-    @eval = ->(root, variables) { evaluator.new(root, variables).eval! }
+    @eval = ->(root, variables) { evaluator.eval_tree!(root, variables) }
   end
 
   def perform!(text)
@@ -32,7 +32,7 @@ RSpec.describe 'Testing variables', type: :feature do
       end
 
       it 'creates two variables and adds them' do
-        perform! text
+        @eval.call(Syntax::SyntaxTree.parse(text), variables)
 
         expect(variables['a']).to eq(1)
         expect(variables['b']).to eq(2)
@@ -46,14 +46,16 @@ RSpec.describe 'Testing variables', type: :feature do
           another_number = 12.3
           yet_another_number = 21.7
           part_two = another_number + yet_another_number
-          the_best_number_ever = part_one + part_two
+
+          nice = part_one + part_two
         TEXT
       end
 
       it 'calculates the best number ever' do
-        perform! text_with_many_variables
+        tree = Syntax::SyntaxTree.parse(text_with_many_variables)
+        @eval.call(tree, variables)
 
-        expect(variables['the_best_number_ever']).to eq(69)
+        expect(variables['nice']).to eq(69)
 
         # make sure that the previous example's variables are not affecting the current one
         expect(variables['a']).to be_nil
@@ -76,29 +78,70 @@ RSpec.describe 'Testing variables', type: :feature do
       let(:expected_result) { -277_695.639_560_439_57 }
 
       it 'can create complex variables and perform all calculations' do
-        perform! text_with_complex_variables
+        @eval.call(Syntax::SyntaxTree.parse(text_with_complex_variables), variables)
 
         expect(variables['result']).to eq expected_result
       end
     end
   end
 
-  context 'when using variables' do
+  context 'when using variables that do not exist' do
     let(:text_using_nonexistent_var) do
       'result = a + 69'
     end
 
     it 'errors but does not kill the process' do
-      tree = Syntax::SyntaxTree.parse(text_using_nonexistent_var.split("\n").first)
-      expect(tree.diagnostics).to be_empty
-
-      evaluator = Syntax::Evaluator.new(tree.root, variables)
-
       expect do
-        evaluator.eval!
-      end.not_to raise_error(StandardError, 'Unknown variable "a" at 10')
-
-      expect(evaluator.diagnostics.last).to eq 'Unknown variable "a" at 0:9'
+        @eval.call(Syntax::SyntaxTree.parse(text_using_nonexistent_var), variables)
+      end.to raise_error(RuntimeError, 'Unknown variable "a" on line 1')
     end
+  end
+
+  shared_examples 'commented expressions with result = 69' do
+    it 'ignores the comment and produces the correct result' do
+      @eval.call(Syntax::SyntaxTree.parse(text_with_comments), variables)
+
+      expect(variables['result']).to eq 69
+    end
+  end
+
+  context 'when using comments on newlines' do
+    let(:text_with_comments) do
+      <<~TEXT
+        a = 34
+        b = 35
+        # result should be 69
+        result = a + b
+      TEXT
+    end
+
+    it_behaves_like 'commented expressions with result = 69'
+  end
+
+  context 'when using comments inlined' do
+    let(:text_with_comments) do
+      <<~TEXT
+        a = 34
+        b = 35 # result should be 69
+        result = a + b
+      TEXT
+    end
+
+    it_behaves_like 'commented expressions with result = 69'
+  end
+
+  context 'when using inlined comments on multiline expressions' do
+    let(:text_with_comments) do
+      <<~TEXT
+        a = 17
+            # comment in the middle of multiline expression
+
+                    * 2
+        b = 35
+        result = a + b
+      TEXT
+    end
+
+    it_behaves_like 'commented expressions with result = 69'
   end
 end
