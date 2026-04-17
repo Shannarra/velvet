@@ -13,24 +13,55 @@ File contents:
 ```
 $ cat ./examples/numbers.vv
 
-thirty_seven            = 5*10-(8*6-15)+4*20/4
-n_nineteen              = 3*(4**2)+8-((11+4)**2)/3
-
-fifty_six                   = 7*9+3-6/2+2*2-11
-two                             = 11+3-7*2+1*4/2
-n_fifty_one             = 12/(1+3)-9*6
-neg_277k                    = 2+2+2+22+2+2*954-6**7+3/65
+# this is a comment
 
 
-
-two_seventy_seven = ((11*22+33-44)**5)/((6**7)*8+9**9)*(69/420)
-result                      = thirty_seven + n_nineteen + fifty_six + two + n_fifty_one
+# comments are entirely ignored
 
 
+# expressions can span many lines and have as much whitespace as needed
+thirty_seven			= 5*10-(
+8*                    6
+         -15
+																						)
++4*      20/4
 
 
 
-                         + neg_277k + two_seventy_seven
+
+
+
+
+n_nineteen				= 3*(4**2)+8-(
+																(
+																	11 +
+																		 # comments could also be within an expression - they are all ignored
+																	4
+																	
+																	)**2
+
+																)/3
+
+
+fifty_six					= 7*9+3-6/2+2*2-11
+
+
+
+
+
+two								= 11+3-7*2+1*4/2
+n_fifty_one				= 12/(1+3)-9*6  # comments could also be at EOL
+neg_277k					= 2+2+2+22+2+2*954-6**7+3/65
+
+
+
+
+two_seventy_seven = ((11*22+33-44)**5)/((6**7)*8+9**9)*(69/420.0)
+result						= thirty_seven + n_nineteen + fifty_six
+									# this is another ignored comment
+																 	 						+ two + n_fifty_one + neg_277k + two_seventy_seven # * 0
+
+
 ```
 
 
