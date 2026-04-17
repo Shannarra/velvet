@@ -14,6 +14,12 @@ module Syntax
       @value = value
     end
 
+    def start_printing_position
+      col = position.col - text.length
+
+      "#{position.row + 1}:#{col}"
+    end
+
     def inspect
       "<Token:#{kind}, text = \"#{text}\" (value \"#{value}\") at #{position}>"
     end
@@ -48,7 +54,7 @@ module Syntax
     end
 
     def inspect
-      "#{@row}:#{@col}"
+      "#{@row + 1}:#{@col}"
     end
   end
 end

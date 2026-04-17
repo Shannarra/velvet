@@ -7,6 +7,17 @@ require_relative 'utils'
 require_relative 'syntax/base'
 require_relative 'syntax/evaluation'
 
+def print_help
+  puts <<~TEXT
+    Velvet usage:
+
+    ruby main.rb
+         --showTree, -st, --debugPrint, -dp                 Shows the AST generated from your expression/file.
+         -h, --help                                         Prints this message
+         -f, --file [FILENAME]                              Provide a flie to be evaluated. Starts REPL if not provided.
+  TEXT
+end
+
 def pretty_print_tree(root, indent = '', is_last: true)
   marker = is_last ? '└───' : '├───'
 
@@ -27,9 +38,11 @@ end
 
 def evaluate_expression(tree, variables = {})
   evaluator = Syntax::Evaluator.new(tree.root, variables)
-  res = evaluator.eval!
 
-  puts res
+  # print the evaluation of each line:
+
+  # res = evaluator.eval!
+  # puts res
 rescue RuntimeError
   print_diagnostics(evaluator)
 end
@@ -74,7 +87,7 @@ def repl_loop(show_tree)
   end
 end
 
-def compile_and_execute(file)
+def compile_and_execute(file, show_tree)
   error! "File #{file} does not exist." unless File.exist? file
 
   variables = {}
@@ -92,17 +105,31 @@ def compile_and_execute(file)
     Syntax::Evaluator.eval_tree! tree, variables
   end
 
+  pretty_print_tree(tree) if show_tree
+
+  puts variables[variables.keys.last]
+
   exit
 end
 
 def main
   debug_show_tree = false
-  ARGV.each do |x|
+  ARGV.each_with_index do |x, idx|
     case x
     when '--showTree', '-st', '--debugPrint', '-dp' then debug_show_tree = true
+    when '-h', '--help' then print_help
+    when '-f', '--file'
+      file = ARGV[idx + 1]
+
+      unless file
+        eputs 'Provide a file to the -f|--file option!'
+        print_help
+        exit(1)
+      end
+
+      compile_and_execute file, debug_show_tree
     else
-      compile_and_execute ARGV.first
-      # wputs "Unrecognized cli argument \"#{x}\". Running with default configuration."
+      wputs "Unrecognized cli argument \"#{x}\". Running with default configuration."
     end
   end.clear
 

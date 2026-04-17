@@ -35,12 +35,12 @@ module Syntax
         token = lexer.lex!
         break if token.nil?
 
-        tokens << token unless [SyntaxKind::WhitespaceToken].include? token.kind
+        tokens << token unless Constants::Kinds::VOID.include? token.kind
       end
 
       # append last token IF it's good
       next_tok = lexer.lex!
-      tokens << token unless [SyntaxKind::WhitespaceToken].include? next_tok.kind
+      tokens << token unless Constants::Kinds::VOID.include? next_tok.kind
 
       @tokens = Array(tokens)
       @diagnostics << lexer.diagnostics
@@ -49,22 +49,10 @@ module Syntax
 
     def parse!
       expr = parse_expression
-
-      if Constants::Kinds::VOID.include?(current.kind)
-        store_expression(expr)
-        next_token
-
-        return parse!
-      end
-
-      # Store the last evaluated expression in the tree
       store_expression(expr)
 
-      # And parse the last few tokens if any left
-      if @tokens.count - 2 != @ip
-        final_expr = parse_expression
-        store_expression(final_expr)
-      end
+      # recursive decent until EOF reached
+      return parse! unless current.kind == SyntaxKind::EOFToken
 
       match(SyntaxKind::EOFToken)
     end
@@ -110,13 +98,6 @@ module Syntax
     def match(kind)
       return next_token if current.kind == kind
 
-      if [SyntaxKind::TabToken, SyntaxKind::WhitespaceToken].include? current.kind
-        next_token
-        return next_token
-      end
-
-      puts "[DIAGNOSTICS]:\n\n#{diagnostics}\n\n" unless diagnostics.empty?
-
       diagnostics << "Unexpected token <#{current.kind}>. Expected <#{kind}> at #{current.position}"
       Token.new(SyntaxKind::BadToken, current.position, nil, nil)
     end
@@ -141,29 +122,18 @@ module Syntax
     end
 
     def parse_primary_expr
-      if current.kind == SyntaxKind::OpenParenthesisToken
-        left = next_token
-        expr = parse_expression
-        right = match(SyntaxKind::CloseParenthesisToken)
-        return ParenthesizedExpressionSyntax.new(left, expr, right)
-      end
-
       case current.kind
-      when SyntaxKind::NumberToken
-        num = match(SyntaxKind::NumberToken)
-        NumberExpressionSyntax.new(num)
-      when SyntaxKind::NewlineToken, SyntaxKind::CommentToken
-        VoidExpressionSyntax.new(current.kind)
+      when SyntaxKind::OpenParenthesisToken then parse_parenthesized
+      when SyntaxKind::NumberToken then NumberExpressionSyntax.new(next_token)
       when SyntaxKind::IdentifierToken then parse_id
       else
-        raise "Unhandled token #{current.kind} found at line #{current.position.row}"
+        prev = peek(-1)
+        raise "Unexpected token \"#{prev.value}\" (#{prev.kind}) found at #{prev.start_printing_position}"
       end
     end
 
     def parse_id
       id = next_token
-
-      next_token while Constants::Kinds::SPACES.include?(current.kind)
 
       if current.kind == SyntaxKind::AssignmentToken
         _assignment_op = match(SyntaxKind::AssignmentToken)
@@ -173,6 +143,13 @@ module Syntax
       end
 
       IdentifierExpressionSyntax.new(id)
+    end
+
+    def parse_parenthesized
+      left = next_token
+      expr = parse_expression
+      right = match(SyntaxKind::CloseParenthesisToken)
+      ParenthesizedExpressionSyntax.new(left, expr, right)
     end
   end
 end

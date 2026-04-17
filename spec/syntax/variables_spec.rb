@@ -130,18 +130,18 @@ RSpec.describe 'Testing variables', type: :feature do # rubocop:disable Metrics/
     it_behaves_like 'commented expressions with result = 69'
   end
 
-  # context 'when using inlined comments on multiline expressions' do
-  #   let(:text_with_comments) do
-  #     <<~TEXT
-  #       a = 17 *
-  #           # comment in the middle of multiline expression
+  context 'when using inlined comments on multiline expressions' do
+    let(:text_with_comments) do
+      <<~TEXT
+        a = 17
+            # comment in the middle of multiline expression
 
-  #                   * 2
-  #       b = 35
-  #       result = a + b
-  #     TEXT
-  #   end
+                    * 2
+        b = 35
+        result = a + b
+      TEXT
+    end
 
-  #   it_behaves_like 'commented expressions with result = 69'
-  # end
+    it_behaves_like 'commented expressions with result = 69'
+  end
 end
