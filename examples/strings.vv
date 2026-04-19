@@ -1,0 +1,15 @@
+first = "John"
+last = ' "Pork"	'
+where = " in 'da' house!"
+
+print "First + last name: "
+puts first + last
+
+print 'Fullname + location: '
+
+fullname_plus_location = first + last + where
+
+# print out the fullname
+puts fullname_plus_location
+
+puts

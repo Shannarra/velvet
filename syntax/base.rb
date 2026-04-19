@@ -8,6 +8,7 @@ module Syntax
   SyntaxKind = enum %w[
     BadToken
 
+    StringToken
     NumberToken
     PlusToken
     MinusToken
@@ -30,6 +31,7 @@ module Syntax
     WhitespaceToken
 
     IdentifierToken
+    BuiltinFunction
   ]
 
   module Constants
@@ -40,6 +42,13 @@ module Syntax
       EOF = '\0'
 
       NON_ALPHA = [*SPACES, *OPERATORS, EOF].freeze
+    end
+
+    module Builtin
+      NAMES = %w[
+        puts
+        print
+      ].freeze
     end
 
     module Kinds

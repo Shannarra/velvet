@@ -34,9 +34,9 @@ RSpec.describe 'Testing variables', type: :feature do # rubocop:disable Metrics/
       it 'creates two variables and adds them' do
         @eval.call(Syntax::SyntaxTree.parse(text), variables)
 
-        expect(variables['a']).to eq(1)
-        expect(variables['b']).to eq(2)
-        expect(variables['c']).to eq(3)
+        expect(variables['a']).to have_attributes(value: 1, kind: Syntax::SyntaxKind::NumberToken)
+        expect(variables['b']).to have_attributes(value: 2, kind: Syntax::SyntaxKind::NumberToken)
+        expect(variables['c']).to have_attributes(value: 3, kind: Syntax::SyntaxKind::NumberToken)
       end
 
       let(:text_with_many_variables) do
@@ -55,7 +55,7 @@ RSpec.describe 'Testing variables', type: :feature do # rubocop:disable Metrics/
         tree = Syntax::SyntaxTree.parse(text_with_many_variables)
         @eval.call(tree, variables)
 
-        expect(variables['nice']).to eq(69)
+        expect(variables['nice']).to have_attributes(value: 69, kind: Syntax::SyntaxKind::NumberToken)
 
         # make sure that the previous example's variables are not affecting the current one
         expect(variables['a']).to be_nil
@@ -75,12 +75,12 @@ RSpec.describe 'Testing variables', type: :feature do # rubocop:disable Metrics/
           result = thirty_seven + n_nineteen + fifty_six + two + n_fifty_one + n_277k + two_seventy_seven
         TEXT
       end
-      let(:expected_result) { -277_695.639_560_439_57 }
+      let(:expected_result_value) { -277_695.639_560_439_57 }
 
       it 'can create complex variables and perform all calculations' do
         @eval.call(Syntax::SyntaxTree.parse(text_with_complex_variables), variables)
 
-        expect(variables['result']).to eq expected_result
+        expect(variables['result']).to have_attributes(value: expected_result_value, kind: Syntax::SyntaxKind::NumberToken)
       end
     end
   end
@@ -93,7 +93,7 @@ RSpec.describe 'Testing variables', type: :feature do # rubocop:disable Metrics/
     it 'errors but does not kill the process' do
       expect do
         @eval.call(Syntax::SyntaxTree.parse(text_using_nonexistent_var), variables)
-      end.to raise_error(RuntimeError, 'Unknown variable "a" on line 1')
+      end.to raise_error(RuntimeError, 'Unknown variable "a" at 1:9')
     end
   end
 
@@ -101,7 +101,7 @@ RSpec.describe 'Testing variables', type: :feature do # rubocop:disable Metrics/
     it 'ignores the comment and produces the correct result' do
       @eval.call(Syntax::SyntaxTree.parse(text_with_comments), variables)
 
-      expect(variables['result']).to eq 69
+      expect(variables['result']).to have_attributes(value: 69, kind: Syntax::SyntaxKind::NumberToken)
     end
   end
 

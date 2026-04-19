@@ -13,14 +13,14 @@ RSpec.describe 'Testing variables', type: :feature do
   describe 'when reading a file' do
     context 'with multiline expressions and comments' do
       let(:filename) { './spec/fixtures/multiline_numbers_with_comments.txt' }
-      let(:expected_result) { -277_695.639_560_439_57 }
+      let(:expected_result_value) { -277_695.639_560_439_57 }
 
       it 'parses the file correctly and gets the correct result' do
         content = File.read(filename)
 
         @eval.call(Syntax::SyntaxTree.parse(content), variables)
 
-        expect(variables['result']).to eq expected_result
+        expect(variables['result']).to have_attributes(value: expected_result_value, kind: Syntax::SyntaxKind::NumberToken)
       end
     end
 

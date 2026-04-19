@@ -85,8 +85,6 @@ def compile_and_execute(file, show_tree)
 
   pretty_print_tree(tree) if show_tree
 
-  puts variables[variables.keys.last]
-
   exit
 end
 

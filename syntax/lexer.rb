@@ -16,6 +16,8 @@ module Syntax
     def lex!
       return Token.new(SyntaxKind::EOFToken, @position.dup, '\0', nil) if @ip >= @text.length
 
+      return handle_string if %w[' "].include?(current)
+
       return handle_comment if current == '#'
 
       return handle_numeric if current.numeric?
@@ -42,6 +44,15 @@ module Syntax
                until Constants::Values::NON_ALPHA.include?(current)
                  token += current
                  get_next
+               end
+
+               if Constants::Builtin::NAMES.include?(token)
+                 return Token.new(
+                   SyntaxKind::BuiltinFunction,
+                   @position.dup,
+                   token,
+                   token
+                 )
                end
 
                return Token.new(SyntaxKind::IdentifierToken, @position.dup, token, token)
@@ -116,6 +127,20 @@ module Syntax
       else
         raise "Unhandled whitespace character #{current}".error!
       end
+    end
+
+    def handle_string
+      string_termination_token = current
+      get_next
+
+      start = @ip
+
+      get_next while current != string_termination_token
+
+      text = @text[start...@ip]
+      get_next
+
+      Token.new(SyntaxKind::StringToken, @position.dup, text, text)
     end
 
     def current
