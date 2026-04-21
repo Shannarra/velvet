@@ -34,5 +34,16 @@ RSpec.describe 'Testing variables', type: :feature do
         end.to raise_error(RuntimeError, 'Unexpected token "aboba" (IdentifierToken) found at 3:12')
       end
     end
+
+    context 'with a multiline string' do
+      let(:filename) { './spec/fixtures/file_with_strings.txt' }
+
+      it 'parses the file correctly and prints to stdout' do
+        expect do
+          content = File.read(filename)
+          @eval.call(Syntax::SyntaxTree.parse(content), variables)
+        end.to output(anything).to_stdout
+      end
+    end
   end
 end

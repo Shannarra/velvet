@@ -2,23 +2,12 @@
 
 require 'spec_helper'
 
-RSpec.describe 'Testing variables', type: :feature do # rubocop:disable Metrics/BlockLength
+RSpec.describe 'Testing variables', type: :feature do
   let(:evaluator) { Syntax::Evaluator }
   let(:variables) { {} }
 
   before do
     @eval = ->(root, variables) { evaluator.eval_tree!(root, variables) }
-  end
-
-  def perform!(text)
-    lines = text.split("\n")
-
-    lines.each do |line|
-      tree = Syntax::SyntaxTree.parse(line)
-
-      expect(tree.diagnostics).to be_empty
-      @eval.call(tree.root, variables)
-    end
   end
 
   context 'when creating a new variable' do

@@ -11,3 +11,13 @@ fullname_plus_location = first + last + where
 
 # print out the fullname
 puts fullname_plus_location
+
+
+puts "multiline
+
+
+string
+
+
+																			with indentations
+							here :)"

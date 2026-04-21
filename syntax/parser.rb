@@ -74,8 +74,8 @@ module Syntax
 
     private
 
-    def store_expression(root, eof_token = current)
-      @scope.root.children << SyntaxTree.new(@diagnostics, root, eof_token)
+    def store_expression(root, eof_token = current, scope = @scope)
+      @scope.root.children << SyntaxTree.new(@diagnostics, root, eof_token, scope)
     end
 
     def peek(offset = 1)

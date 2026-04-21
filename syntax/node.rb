@@ -20,7 +20,7 @@ module Syntax
     def initialize
       super(
         :GLOBAL_SCOPE,
-        []
+        [],
       )
     end
   end

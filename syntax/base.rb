@@ -75,17 +75,20 @@ module Syntax
   end
 
   class SyntaxTree
-    attr_reader :diagnostics, :root, :eof_token
+    attr_reader :diagnostics, :root, :eof_token, :scope
 
-    def initialize(diagnostics, root, eof_token)
+    def initialize(diagnostics, root, eof_token, scope)
       @diagnostics = diagnostics.flatten
       @root = root
       @eof_token = eof_token
+      @scope = scope
     end
 
     class << self
       def global_scope
-        SyntaxTree.new([], GlobalScope.new, '\0')
+        global_scope = GlobalScope.new
+
+        SyntaxTree.new([], global_scope, '\0', global_scope)
       end
 
       def parse(text)

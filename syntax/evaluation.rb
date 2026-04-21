@@ -4,10 +4,11 @@ module Syntax
   class Evaluator # rubocop:disable Metrics/ClassLength
     attr_reader :diagnostics
 
-    def initialize(root, variables)
+    def initialize(root, variables, parent_scope)
       @root = root
       @variables = variables
       @diagnostics = []
+      @parent_scope = parent_scope
     end
 
     def eval!
@@ -17,7 +18,7 @@ module Syntax
     def self.eval_tree!(tree, variables)
       diagnostics = []
       tree.root.children.each do |sub|
-        ev = new(sub.root, variables)
+        ev = new(sub.root, variables, tree.scope)
 
         ev.eval!
 
@@ -118,7 +119,7 @@ module Syntax
 
         raise "Operator #{operator.text} is not applicable to strings."
       else
-        raise "Operator #{operator.text} is not applicable to #{left.value} and #{right.value}"
+        raise "Operator #{operator.text} is not applicable to \"#{left.value}\" and \"#{right.value}\""
       end
     end
 
