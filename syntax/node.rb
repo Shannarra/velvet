@@ -20,7 +20,7 @@ module Syntax
     def initialize
       super(
         :GLOBAL_SCOPE,
-        []
+        [],
       )
     end
   end
@@ -34,12 +34,6 @@ module Syntax
     def debug_print!
       pretty_print_tree self
       nil
-    end
-  end
-
-  class VoidExpressionSyntax < ExpressionSyntax
-    def initialize(kind)
-      super(kind, [])
     end
   end
 
@@ -61,6 +55,15 @@ module Syntax
       super(kind, [token])
       @token = token
       @is_integer = token.value.is_a? Integer
+    end
+  end
+
+  class StringExpressionSyntax < ExpressionSyntax
+    attr_reader :kind, :token
+
+    def initialize(token)
+      super(kind, [])
+      @token = token
     end
   end
 
@@ -91,6 +94,16 @@ module Syntax
       super(SyntaxKind::AssignmentToken, [id, value])
       @id = id
       @value = value
+    end
+  end
+
+  class BuiltinFunctionSyntax < ExpressionSyntax
+    attr_reader :name, :args
+
+    def initialize(name, args)
+      super(SyntaxKind::BuiltinFunction, [name, args])
+      @name = name
+      @args = args
     end
   end
 end

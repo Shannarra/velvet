@@ -74,8 +74,8 @@ module Syntax
 
     private
 
-    def store_expression(root, eof_token = current)
-      @scope.root.children << SyntaxTree.new(@diagnostics, root, eof_token)
+    def store_expression(root, eof_token = current, scope = @scope)
+      @scope.root.children << SyntaxTree.new(@diagnostics, root, eof_token, scope)
     end
 
     def peek(offset = 1)
@@ -126,9 +126,18 @@ module Syntax
       when SyntaxKind::OpenParenthesisToken then parse_parenthesized
       when SyntaxKind::NumberToken then NumberExpressionSyntax.new(next_token)
       when SyntaxKind::IdentifierToken then parse_id
+      when SyntaxKind::StringToken then StringExpressionSyntax.new(next_token)
+      when SyntaxKind::BuiltinFunction
+        name = next_token
+        args = parse_expression
+        BuiltinFunctionSyntax.new(name, args)
       else
         prev = peek(-1)
-        raise "Unexpected token \"#{prev.value}\" (#{prev.kind}) found at #{prev.start_printing_position}"
+
+        err_msg = "Unexpected token \"#{prev.value}\" (#{prev.kind}) found at #{prev.start_printing_position}"
+        err_msg += ', expected EOF' if current.kind == SyntaxKind::EOFToken
+
+        raise err_msg
       end
     end
 

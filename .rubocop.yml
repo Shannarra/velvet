@@ -24,6 +24,11 @@ Metrics/MethodLength:
   Max: 50
 Metrics/BlockLength:
   Max: 100
+
+  # idc about block lenght in specs
+  Exclude:
+    - './spec/**/*_spec.rb'
+  
 Metrics/PerceivedComplexity:
   Max: 50
 Layout/LineLength:

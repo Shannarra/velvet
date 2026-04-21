@@ -1,13 +1,14 @@
 # frozen_string_literal: true
 
 module Syntax
-  class Evaluator
+  class Evaluator # rubocop:disable Metrics/ClassLength
     attr_reader :diagnostics
 
-    def initialize(root, variables)
+    def initialize(root, variables, parent_scope)
       @root = root
       @variables = variables
       @diagnostics = []
+      @parent_scope = parent_scope
     end
 
     def eval!
@@ -17,7 +18,7 @@ module Syntax
     def self.eval_tree!(tree, variables)
       diagnostics = []
       tree.root.children.each do |sub|
-        ev = new(sub.root, variables)
+        ev = new(sub.root, variables, tree.scope)
 
         ev.eval!
 
@@ -30,16 +31,17 @@ module Syntax
     private
 
     def evaluate_expr!(expr)
-      if expr.is_a? NumberExpressionSyntax
-        value = expr.token.value
-
-        return expr.is_integer ? Integer(value) : Float(value)
-      end
+      return expr.token if expr.is_a? NumberExpressionSyntax
+      return expr.token if expr.is_a? StringExpressionSyntax
 
       if expr.is_a? IdentifierExpressionSyntax
-        return @variables[expr.id.value] if @variables.keys.include? expr.id.value
+        if @variables.keys.include? expr.id.value
+          value_token = @variables[expr.id.value]
 
-        diagnostics << "Unknown variable \"#{expr.id.value}\" on line #{expr.id.position.row + 1}"
+          return value_token
+        end
+
+        diagnostics << "Unknown variable \"#{expr.id.value}\" at #{expr.id.start_printing_position}"
         raise diagnostics.last
       end
 
@@ -53,22 +55,18 @@ module Syntax
       if expr.is_a? BinaryExpressionSyntax
         left = evaluate_expr!(expr.left)
         right = evaluate_expr!(expr.right)
+        operator = expr.operator
 
-        case expr.operator.kind
-        when SyntaxKind::PlusToken then return left + right
-        when SyntaxKind::MinusToken then return left - right
-        when SyntaxKind::StarToken then return left * right
-        when SyntaxKind::SlashToken
-          denom = right
-          denom = right.to_f if right > left || right.is_a?(Float)
-
-          return left / denom
-        when SyntaxKind::DoubleStarToken then return left**right
-        else raise "Unexpected binary operator #{expr.operator.kind}".error!
-        end
+        return eval_binary_expr(left, operator, right)
       end
 
       return evaluate_expr! expr.expression if expr.is_a? ParenthesizedExpressionSyntax
+
+      if expr.is_a? BuiltinFunctionSyntax
+        arg_value = evaluate_expr!(expr.args)
+
+        return evaluate_builtin(expr.name, arg_value)
+      end
 
       if expr.is_a?(GlobalScope)
         results = expr.children.map do |subtree|
@@ -81,6 +79,78 @@ module Syntax
       diagnostics << "Unexpected node \"#{expr.is_a?(Token) ? expr.kind : expr}\""
 
       raise @diagnostics.last
+    end
+
+    # A fake mid-evaluation token based on @base_token
+    # will be unwrapped down the line with recursion
+    def new_eval_token(kind, base_token, value)
+      Token.new(
+        kind,
+        base_token.position,
+        base_token.text,
+        value
+      )
+    end
+
+    def eval_binary_expr(left, operator, right)
+      if left.kind == SyntaxKind::NumberToken &&
+         right.kind == SyntaxKind::NumberToken
+
+        left_value = left.value
+        right_value = right.value
+
+        new_eval_token(
+          SyntaxKind::NumberToken,
+          left,
+          apply_numeric_operator(left_value, operator, right_value)
+        )
+      elsif left.kind == SyntaxKind::StringToken &&
+            right.kind == SyntaxKind::StringToken
+
+        if operator.kind == SyntaxKind::PlusToken
+          value = left.value + right.value
+
+          return new_eval_token(
+            SyntaxKind::StringToken,
+            left,
+            value
+          )
+        end
+
+        raise "Operator #{operator.text} is not applicable to strings."
+      else
+        raise "Operator #{operator.text} is not applicable to \"#{left.value}\" and \"#{right.value}\""
+      end
+    end
+
+    def apply_numeric_operator(left, operator, right)
+      case operator.kind
+      when SyntaxKind::PlusToken then left + right
+      when SyntaxKind::MinusToken then left - right
+      when SyntaxKind::StarToken then left * right
+      when SyntaxKind::SlashToken
+        denom = right
+        denom = right.to_f if right > left || right.is_a?(Float)
+
+        left / denom
+      when SyntaxKind::DoubleStarToken then left**right
+      else raise "Unexpected binary operator #{expr.operator.kind}".error!
+      end
+    end
+
+    def evaluate_builtin(name_token, arg_value_token)
+      raise "No value provided for builtin function \"#{name_token.value}\" at #{name_token.start_printing_position}" unless arg_value_token
+
+      case name_token.value
+      when 'puts'
+        value = arg_value_token.value
+        puts value
+      when 'print'
+        value = arg_value_token.value
+        print value
+      else
+        raise "Unknown builtin function \"#{name_token.text}\" at #{name_token.start_printing_position}"
+      end
     end
   end
 end
