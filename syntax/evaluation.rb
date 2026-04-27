@@ -68,6 +68,46 @@ module Syntax
         return evaluate_builtin(expr.name, arg_value)
       end
 
+      if expr.is_a? ArrayExpressionSyntax
+        evaluated_body = expr.items.map do |item|
+          evaluate_expr!(item)
+        end
+
+        return new_eval_token(
+          SyntaxKind::ArrayExpression,
+          expr.open_token,
+          evaluated_body
+        )
+      end
+
+      if expr.is_a? ArrayIndexingExpressionSyntax
+        array_token = evaluate_expr!(IdentifierExpressionSyntax.new(expr.array_id))
+
+        unless array_token.kind == SyntaxKind::ArrayExpression
+          raise "Array indexing is only allowed on arrays. Got #{array_token.kind} at #{array_token.start_printing_position}"
+        end
+
+        index_token = evaluate_expr!(NumberExpressionSyntax.new(expr.index))
+
+        index_token = evaluate_expr!(IdentifierExpressionSyntax.new(index_token)) if index_token.kind == SyntaxKind::IdentifierToken
+
+        return array_token.value[index_token.value]
+      end
+
+      if expr.is_a? ArrayIndexingAssignmentExpressionSyntax
+        array_token = evaluate_expr!(IdentifierExpressionSyntax.new(expr.array_indexing_expression.array_id))
+
+        unless array_token.kind == SyntaxKind::ArrayExpression
+          raise "Array indexing assignment is only allowed on arrays. Got #{array_token.kind} at #{array_token.start_printing_position}"
+        end
+
+        index_token = evaluate_expr!(NumberExpressionSyntax.new(expr.array_indexing_expression.index))
+
+        array_token.value[index_token.value] = expr.right
+
+        return array_token
+      end
+
       if expr.is_a?(GlobalScope)
         results = expr.children.map do |subtree|
           evaluate_expr! subtree
@@ -142,14 +182,36 @@ module Syntax
       raise "No value provided for builtin function \"#{name_token.value}\" at #{name_token.start_printing_position}" unless arg_value_token
 
       case name_token.value
-      when 'puts'
-        value = arg_value_token.value
-        puts value
-      when 'print'
-        value = arg_value_token.value
-        print value
+      when 'puts' then builtin_puts(arg_value_token)
+      when 'print' then builtin_print(arg_value_token)
       else
         raise "Unknown builtin function \"#{name_token.text}\" at #{name_token.start_printing_position}"
+      end
+    end
+
+    def builtin_puts(arg)
+      case arg.kind
+      when SyntaxKind::ArrayExpression
+        arg.value.each do |sub|
+          builtin_puts(sub)
+        end
+      else
+        value = arg.is_a?(ExpressionSyntax) ? evaluate_expr!(arg).value : arg.value
+        puts value
+      end
+    end
+
+    def builtin_print(arg)
+      case arg.kind
+      when SyntaxKind::ArrayExpression
+        print '['
+        arg.value.each do |sub|
+          builtin_print(sub)
+        end
+        print ']'
+      else
+        value = arg.value
+        print value
       end
     end
   end

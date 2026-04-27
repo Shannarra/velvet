@@ -1,0 +1,31 @@
+simple_array = [1, 2, 3, 4, 5]
+
+#puts simple_array
+
+#nested_array = [
+#  [1, 2, 3],
+#	[4, 5, 6],
+#	[7, 8, 9]
+#]
+#
+#puts "Nested array contents: "
+#puts nested_array
+#
+
+# array access
+#print "Simple array[2] = "
+#puts simple_array[2]
+
+# test array access assignment
+item = simple_array[2] 
+
+item = 69
+
+puts simple_array[2]
+
+print "simple_array[2] changed to this value using array assignment: "
+simple_array[2] = 69		
+puts simple_array[2]
+
+puts "simple_array printed once again:"
+puts simple_array

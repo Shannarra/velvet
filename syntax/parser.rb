@@ -124,6 +124,7 @@ module Syntax
     def parse_primary_expr
       case current.kind
       when SyntaxKind::OpenParenthesisToken then parse_parenthesized
+      when SyntaxKind::OpenBracketToken then parse_array
       when SyntaxKind::NumberToken then NumberExpressionSyntax.new(next_token)
       when SyntaxKind::IdentifierToken then parse_id
       when SyntaxKind::StringToken then StringExpressionSyntax.new(next_token)
@@ -149,6 +150,23 @@ module Syntax
         right = parse_expression
 
         return AssignmentExpressionSyntax.new(id, right)
+
+      elsif current.kind == SyntaxKind::OpenBracketToken
+        index_open_bracket = match(SyntaxKind::OpenBracketToken)
+        index = next_token
+        index_close_bracket = match(SyntaxKind::CloseBracketToken)
+
+        aie = ArrayIndexingExpressionSyntax.new(id, index_open_bracket, index, index_close_bracket)
+
+        if current.kind == SyntaxKind::AssignmentToken
+          next_token
+
+          right = parse_expression
+
+          return ArrayIndexingAssignmentExpressionSyntax.new(aie, right)
+        end
+
+        return aie
       end
 
       IdentifierExpressionSyntax.new(id)
@@ -159,6 +177,23 @@ module Syntax
       expr = parse_expression
       right = match(SyntaxKind::CloseParenthesisToken)
       ParenthesizedExpressionSyntax.new(left, expr, right)
+    end
+
+    def parse_array
+      left = next_token
+      body = []
+
+      until current.kind == SyntaxKind::CloseBracketToken
+        expr = parse_expression
+
+        match(SyntaxKind::CommaToken) unless current.kind == SyntaxKind::CloseBracketToken
+
+        body << expr
+      end
+
+      right = match(SyntaxKind::CloseBracketToken)
+
+      ArrayExpressionSyntax.new(left, body, right)
     end
   end
 end

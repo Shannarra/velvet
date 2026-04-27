@@ -19,7 +19,7 @@ def print_help
 end
 
 def evaluate_expression(tree, variables = {})
-  evaluator = Syntax::Evaluator.new(tree.root, variables)
+  evaluator = Syntax::Evaluator.new(tree.root, variables, Syntax::GlobalScope.new)
 
   # print the evaluation of each line:
 

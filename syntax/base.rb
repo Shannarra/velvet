@@ -19,6 +19,11 @@ module Syntax
     CloseParenthesisToken
     AssignmentToken
 
+    OpenBracketToken
+    CloseBracketToken
+    CommaToken
+
+    ArrayExpression
     ParenthesizedExpression
     NumberExpression
     BinaryExpression
@@ -37,7 +42,7 @@ module Syntax
   module Constants
     module Values
       SPACES = [' ', "\n", "\t"].freeze
-      OPERATORS = %w[+ - * ** / ( ) =].freeze
+      OPERATORS = %w[+ - * ** / ( ) [ ] =].freeze
       COMMENT = '#'
       EOF = '\0'
 
