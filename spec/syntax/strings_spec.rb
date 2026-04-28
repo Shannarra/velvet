@@ -11,7 +11,7 @@ RSpec.describe 'Testing variables', type: :feature do
   end
 
   describe 'creating a string' do
-    context 'when it\'s just a pain token' do
+    context 'when it\'s just a plain token' do
       let(:text) do
         <<~TEXT
           "hello"

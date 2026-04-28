@@ -78,6 +78,39 @@ module Syntax
     end
   end
 
+  class ArrayExpressionSyntax < ExpressionSyntax
+    attr_reader :kind, :open_token, :items, :closed_token
+
+    def initialize(open_token, items, closed_token)
+      super(SyntaxKind::ArrayExpression, [open_token, items, closed_token])
+      @open_token = open_token
+      @items = items
+      @closed_token = closed_token
+    end
+  end
+
+  class ArrayIndexingExpressionSyntax < ExpressionSyntax
+    attr_reader :kind, :array_id, :open_token, :index, :closed_token
+
+    def initialize(array_id, open_token, index, closed_token)
+      super(SyntaxKind::ArrayExpression, [array_id, open_token, index, closed_token])
+      @array_id = array_id
+      @open_token = open_token
+      @index = index
+      @closed_token = closed_token
+    end
+  end
+
+  class ArrayIndexingAssignmentExpressionSyntax < ExpressionSyntax
+    attr_reader :kind, :array_indexing_expression, :right
+
+    def initialize(array_indexing_expression, right)
+      super(SyntaxKind::ArrayExpression, [array_indexing_expression, right])
+      @array_indexing_expression = array_indexing_expression
+      @right = right
+    end
+  end
+
   class IdentifierExpressionSyntax < ExpressionSyntax
     attr_reader :id
 

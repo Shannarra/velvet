@@ -19,6 +19,11 @@ module Syntax
     CloseParenthesisToken
     AssignmentToken
 
+    OpenBracketToken
+    CloseBracketToken
+    CommaToken
+
+    ArrayExpression
     ParenthesizedExpression
     NumberExpression
     BinaryExpression
@@ -37,7 +42,7 @@ module Syntax
   module Constants
     module Values
       SPACES = [' ', "\n", "\t"].freeze
-      OPERATORS = %w[+ - * ** / ( ) =].freeze
+      OPERATORS = %w[+ - * ** / ( ) [ ] =].freeze
       COMMENT = '#'
       EOF = '\0'
 
@@ -97,7 +102,7 @@ module Syntax
         parser = Parser.new(text, global_scope)
         parser.parse!
 
-        puts parser.diagnostics unless parser.diagnostics.empty?
+        raise parser.diagnostics.first unless parser.diagnostics.empty?
 
         global_scope
       end

@@ -45,5 +45,16 @@ RSpec.describe 'Testing variables', type: :feature do
         end.to output(anything).to_stdout
       end
     end
+
+    context 'with a multiline array' do
+      let(:filename) { './spec/fixtures/file_with_arrays.txt' }
+
+      it 'parses the file correctly and prints to stdout' do
+        expect do
+          content = File.read(filename)
+          @eval.call(Syntax::SyntaxTree.parse(content), variables)
+        end.to output(anything).to_stdout
+      end
+    end
   end
 end

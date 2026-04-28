@@ -37,6 +37,12 @@ module Syntax
                SyntaxKind::OpenParenthesisToken
              when ')'
                SyntaxKind::CloseParenthesisToken
+             when '['
+               SyntaxKind::OpenBracketToken
+             when ']'
+               SyntaxKind::CloseBracketToken
+             when ','
+               SyntaxKind::CommaToken
              when '='
                SyntaxKind::AssignmentToken
              else
