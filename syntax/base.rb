@@ -102,7 +102,7 @@ module Syntax
         parser = Parser.new(text, global_scope)
         parser.parse!
 
-        puts parser.diagnostics unless parser.diagnostics.empty?
+        raise parser.diagnostics.first unless parser.diagnostics.empty?
 
         global_scope
       end

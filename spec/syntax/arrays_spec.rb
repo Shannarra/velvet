@@ -78,5 +78,54 @@ RSpec.describe 'Testing variables', type: :feature do
         expect(variables['item']).to have_attributes(value: 'an', kind: Syntax::SyntaxKind::StringToken)
       end
     end
+
+    context 'when assignment indexing' do
+      let(:text) do
+        <<~TEXT
+          array = ['I', "am", 'an', "array"]
+
+          index = 2**3-2*3
+
+          array[index] = 'ABOBA'
+        TEXT
+      end
+
+      it 'creates an array of strings with single and double quotes' do
+        expect do
+          @eval.call(Syntax::SyntaxTree.parse(text), variables)
+        end.not_to raise_error
+        expect(variables['index']).to have_attributes(value: 2, kind: Syntax::SyntaxKind::NumberToken)
+
+        expect(variables['array'].value).to match_array(
+          [
+            have_attributes(value: 'I', kind: Syntax::SyntaxKind::StringToken),
+            have_attributes(value: 'am', kind: Syntax::SyntaxKind::StringToken),
+            have_attributes(value: 'ABOBA', kind: Syntax::SyntaxKind::StringToken),
+            have_attributes(value: 'array', kind: Syntax::SyntaxKind::StringToken)
+          ]
+        )
+      end
+    end
+
+    context 'when having a syntax error' do
+      let(:text) do
+        <<~TEXT
+          array = ['I', "am" 'an', "array"]
+
+          index = 2**3-2*3
+
+          array[index] = 'ABOBA'
+        TEXT
+      end
+
+      it 'creates an array of strings with single and double quotes' do
+        expect do
+          @eval.call(Syntax::SyntaxTree.parse(text), variables)
+        end.to raise_error(RuntimeError, 'Unexpected token <StringToken>. Expected <CommaToken> at 1:23')
+
+        expect(variables['index']).to be_nil
+        expect(variables['array']).to be_nil
+      end
+    end
   end
 end
