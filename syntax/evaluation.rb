@@ -28,73 +28,86 @@ module Syntax
       diagnostics
     end
 
+    EVALUATION_METHODS = {
+      NumberExpression: :self_token,
+      StringExpression: :self_token,
+      IdentifierExpression: :evaluate_identifier,
+      AssignmentExpression: :evaluate_assignment,
+      ParenthesizedExpression: :evaluate_sub_expr,
+      BinaryExpression: :evaluate_binary,
+      ArrayExpression: :evaluate_array,
+      ArrayIndexingExpression: :evaluate_array_indexing,
+      ArrayIndexingAssignmentExpression: :evaluate_array_indexing_assignment,
+      GlobalScope: :evaluate_global_scope,
+      BuiltinFunctionExpression: :evaluate_builtin_function
+    }.freeze
+
     private
 
     def evaluate_expr!(expr)
-      return expr.token if expr.is_a? NumberExpressionSyntax
-      return expr.token if expr.is_a? StringExpressionSyntax
+      raise "Unexpected node \"#{expr.kind}\" - I don't know how to handle it." unless EVALUATION_METHODS.key?(expr.kind.to_sym)
 
-      if expr.is_a? IdentifierExpressionSyntax
-        if @variables.keys.include? expr.id.value
-          value_token = @variables[expr.id.value]
+      __send__(EVALUATION_METHODS[expr.kind.to_sym], expr)
+    end
 
-          return value_token
-        end
+    def self_token(expr)
+      expr.token
+    end
 
-        diagnostics << "Unknown variable \"#{expr.id.value}\" at #{expr.id.start_printing_position}"
-        raise diagnostics.last
+    def evaluate_identifier(expr)
+      if @variables.keys.include? expr.id.value
+        value_token = @variables[expr.id.value]
+
+        return value_token
       end
 
-      if expr.is_a? AssignmentExpressionSyntax
-        result = evaluate_expr! expr.value
+      diagnostics << "Unknown variable \"#{expr.id.value}\" at #{expr.id.start_printing_position}"
+      raise diagnostics.last
+    end
 
-        @variables[expr.id.value] = result
-        return result
+    def evaluate_assignment(expr)
+      result = evaluate_expr! expr.value
+
+      @variables[expr.id.value] = result
+      result
+    end
+
+    def evaluate_binary(expr)
+      left = evaluate_expr!(expr.left)
+      right = evaluate_expr!(expr.right)
+      operator = expr.operator
+
+      eval_binary_expr(left, operator, right)
+    end
+
+    def evaluate_array(expr)
+      evaluated_body = expr.items.map do |item|
+        evaluate_expr!(item)
       end
 
-      if expr.is_a? BinaryExpressionSyntax
-        left = evaluate_expr!(expr.left)
-        right = evaluate_expr!(expr.right)
-        operator = expr.operator
+      new_eval_token(
+        SyntaxKind::ArrayExpression,
+        expr.open_token,
+        evaluated_body
+      )
+    end
 
-        return eval_binary_expr(left, operator, right)
+    def evaluate_global_scope(expr)
+      results = expr.children.map do |subtree|
+        evaluate_expr! subtree
       end
 
-      return evaluate_expr! expr.expression if expr.is_a? ParenthesizedExpressionSyntax
+      results.last
+    end
 
-      if expr.is_a? BuiltinFunctionSyntax
-        arg_value = evaluate_expr!(expr.args)
+    def evaluate_sub_expr(expr)
+      evaluate_expr! expr.expression
+    end
 
-        return evaluate_builtin(expr.name, arg_value)
-      end
+    def evaluate_builtin_function(expr)
+      arg_value = evaluate_expr!(expr.args)
 
-      if expr.is_a? ArrayExpressionSyntax
-        evaluated_body = expr.items.map do |item|
-          evaluate_expr!(item)
-        end
-
-        return new_eval_token(
-          SyntaxKind::ArrayExpression,
-          expr.open_token,
-          evaluated_body
-        )
-      end
-
-      return evaluate_array_indexing(expr) if expr.is_a? ArrayIndexingExpressionSyntax
-
-      return evaluate_array_indexing_assignment(expr) if expr.is_a? ArrayIndexingAssignmentExpressionSyntax
-
-      if expr.is_a?(GlobalScope)
-        results = expr.children.map do |subtree|
-          evaluate_expr! subtree
-        end
-
-        return results.last
-      end
-
-      diagnostics << "Unexpected node \"#{expr.is_a?(Token) ? expr.kind : expr}\""
-
-      raise @diagnostics.last
+      evaluate_builtin(expr.name, arg_value)
     end
 
     # A fake mid-evaluation token based on @base_token
@@ -172,27 +185,30 @@ module Syntax
         raise "Array indexing is only allowed on arrays. Got #{array_token.kind} at #{array_token.start_printing_position}."
       end
 
-      index_token = evaluate_expr!(NumberExpressionSyntax.new(given_index_token))
+      index_token = given_index_token
 
-      index_token = evaluate_expr!(IdentifierExpressionSyntax.new(index_token)) if index_token.kind == SyntaxKind::IdentifierToken
+      if given_index_token.kind == SyntaxKind::IdentifierToken
+        index_token = evaluate_expr!(SyntaxNode.new(SyntaxNodeType::IdentifierExpression,
+                                                    id: given_index_token))
+      end
 
       index_token
     end
 
     def evaluate_array_indexing(expr)
-      array_token = evaluate_expr!(IdentifierExpressionSyntax.new(expr.array_id))
+      array_token = evaluate_expr!(SyntaxNode.new(SyntaxNodeType::IdentifierExpression, id: expr.array_id))
 
-      index_token = array_index_token(array_token, expr.index)
+      index_value = array_index_token(array_token, expr.index).value
 
-      array_token.value[index_token.value]
+      array_token.value[index_value]
     end
 
     def evaluate_array_indexing_assignment(expr)
-      array_token = evaluate_expr!(IdentifierExpressionSyntax.new(expr.array_indexing_expression.array_id))
+      array_token = evaluate_expr!(SyntaxNode.new(SyntaxNodeType::IdentifierExpression, id: expr.array_indexing_expression.array_id))
 
-      index_token = array_index_token(array_token, expr.array_indexing_expression.index)
+      index_value = array_index_token(array_token, expr.array_indexing_expression.index).value
 
-      array_token.value[index_token.value] = evaluate_expr!(expr.right)
+      array_token.value[index_value] = evaluate_expr!(expr.right)
 
       array_token
     end
