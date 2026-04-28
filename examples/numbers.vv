@@ -47,3 +47,7 @@ result						= thirty_seven + n_nineteen + fifty_six
 									# this is another ignored comment
 																 	 						+ two + n_fifty_one + neg_277k + two_seventy_seven # * 0
 
+
+# print the result
+print "Result is: "
+puts result
