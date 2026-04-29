@@ -30,8 +30,6 @@ module Syntax
                    name: nil, args: nil) # binary expressions
       # rubocop:enable Metrics/ParameterLists
       @kind = kind
-      @children = Array(children)
-
       @left = left
       @operator = operator
       @right = right
@@ -48,12 +46,39 @@ module Syntax
       @value = value
       @name = name
       @args = args
+
+      @children = if children.nil?
+                    children_for_kind
+                  else
+                    Array(children)
+                  end
     end
 
     def children(&block)
       return @children.each(&block) if block_given?
 
       @children
+    end
+
+    def children_for_kind
+      case kind
+      when SyntaxNodeType::NumberExpression, SyntaxNodeType::StringExpression then [token]
+      when SyntaxNodeType::IdentifierExpression then [id]
+      when SyntaxNodeType::AssignmentExpression then [id, value]
+      when SyntaxNodeType::BinaryExpression then [left, operator, right]
+      when SyntaxNodeType::ParenthesizedExpression then [open_token, expression, closed_token]
+      when SyntaxNodeType::ArrayExpression then [open_token, items, closed_token]
+      when SyntaxNodeType::ArrayIndexingExpression then [array_id, open_token, index, closed_token]
+      when SyntaxNodeType::ArrayIndexingAssignmentExpression then [array_indexing_expression, value]
+      when SyntaxNodeType::BuiltinFunctionExpression then [name, args]
+      else
+        raise 'Unreachable'
+      end
+    end
+
+    def debug_print!
+      pretty_print_tree self
+      nil
     end
   end
 
@@ -67,6 +92,8 @@ module Syntax
   end
 
   SyntaxNodeType = enum %w[
+    BaseExpression
+
     NumberExpression
     StringExpression
 
@@ -82,16 +109,4 @@ module Syntax
 
     BuiltinFunctionExpression
   ].freeze
-
-  class ExpressionSyntax < SyntaxNode
-    def initialize(kind, children: nil)
-      super
-      @children = children
-    end
-
-    def debug_print!
-      pretty_print_tree self
-      nil
-    end
-  end
 end

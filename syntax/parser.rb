@@ -185,7 +185,7 @@ module Syntax
       expression = parse_expression
       right = match(SyntaxKind::CloseParenthesisToken)
 
-      SyntaxNode.new(SyntaxNodeType::ParenthesizedExpression, left:, expression:, right:)
+      SyntaxNode.new(SyntaxNodeType::ParenthesizedExpression, open_token: left, expression:, closed_token: right)
     end
 
     def parse_array

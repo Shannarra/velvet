@@ -220,8 +220,7 @@ module Syntax
           builtin_puts(sub)
         end
       else
-        value = arg.is_a?(ExpressionSyntax) ? evaluate_expr!(arg).value : arg.value
-        puts value
+        puts arg.value
       end
     end
 
@@ -234,8 +233,7 @@ module Syntax
         end
         print ']'
       else
-        value = arg.value
-        print value
+        print arg.value
       end
     end
   end

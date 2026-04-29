@@ -45,17 +45,34 @@ end
 def pretty_print_tree(root, indent = '', is_last: true)
   marker = is_last ? '└───' : '├───'
 
-  root = root.root if root.is_a?(Syntax::SyntaxTree)
+  value = nil
+  if root.is_a?(Syntax::SyntaxTree)
+    root = root.root
+  elsif root.is_a? Array
+    if root.is_a?(Syntax::Token)
+      value = root.value
+    else
+      indent += is_last ? '    ' : '│   '
 
-  print "#{indent}#{marker}#{root.kind}"
+      return root.each do |item|
+        pretty_print_tree(item, indent)
+      end
+    end
+  else
+    value = root&.value
+  end
 
-  print " #{root.value}" if root.is_a?(Syntax::Token) && !root.value.nil?
-  puts ''
+  if root
+    out = "#{indent}#{marker}#{root&.kind}"
+    out += " \"#{value}\"" if value
+
+    puts out
+  end
 
   indent += is_last ? '    ' : '│   '
-  last_child = root.children[-1]
+  last_child = root.children[-1] if root
 
-  root.children do |child|
+  root&.children do |child|
     pretty_print_tree(child, indent, is_last: child == last_child)
   end
 end

@@ -83,7 +83,7 @@ def compile_and_execute(file, show_tree)
     Syntax::Evaluator.eval_tree! tree, variables
   end
 
-  pretty_print_tree(tree) if show_tree
+  pretty_print_tree(tree.root) if show_tree
 
   exit
 end
