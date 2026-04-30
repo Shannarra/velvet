@@ -2,11 +2,56 @@
 
 module Syntax
   class SyntaxNode
-    attr_reader :kind
+    # Moving to tagged union - style implementation to simplify usage
+    # and move away from using Ruby reflections (i.e. "x.is_a?(Y)") in the
+    # evaluation processing
 
-    def initialize(kind, children)
+    attr_reader :kind,
+                :left, :operator, :right,
+                :token, :is_integer,
+                :open_token, :expression, :closed_token,
+                :items,
+                :array_id, :index,
+                :array_indexing_expression,
+                :id,
+                :value,
+                :name, :args
+
+    # rubocop:disable Metrics/ParameterLists
+    def initialize(kind, children: nil,
+                   left: nil, operator: nil, right: nil, # binary expressions
+                   token: nil, is_integer: nil, # binary expressions
+                   open_token: nil, expression: nil, closed_token: nil, # binary expressions
+                   items: nil, # binary expressions
+                   array_id: nil, index: nil, # binary expressions
+                   array_indexing_expression: nil, # binary expressions
+                   id: nil, # binary expressions
+                   value: nil, # binary expressions
+                   name: nil, args: nil) # binary expressions
+      # rubocop:enable Metrics/ParameterLists
       @kind = kind
-      @children = Array(children)
+      @left = left
+      @operator = operator
+      @right = right
+      @token = token
+      @is_integer = is_integer
+      @open_token = open_token
+      @expression = expression
+      @closed_token = closed_token
+      @items = items
+      @array_id = array_id
+      @index = index
+      @array_indexing_expression = array_indexing_expression
+      @id = id
+      @value = value
+      @name = name
+      @args = args
+
+      @children = if children.nil?
+                    children_for_kind
+                  else
+                    Array(children)
+                  end
     end
 
     def children(&block)
@@ -14,129 +59,65 @@ module Syntax
 
       @children
     end
-  end
 
-  class GlobalScope < SyntaxNode
-    def initialize
-      super(
-        :GLOBAL_SCOPE,
-        [],
-      )
-    end
-  end
-
-  class ExpressionSyntax < SyntaxNode
-    def initialize(kind, children)
-      super
-      @children = children
+    def children_for_kind
+      case kind
+      when SyntaxNodeType::NumberExpression, SyntaxNodeType::StringExpression then [token]
+      when SyntaxNodeType::IdentifierExpression then [id]
+      when SyntaxNodeType::AssignmentExpression then [id, value]
+      when SyntaxNodeType::BinaryExpression then [left, operator, right]
+      when SyntaxNodeType::ParenthesizedExpression then [open_token, expression, closed_token]
+      when SyntaxNodeType::ArrayExpression then [open_token, items, closed_token]
+      when SyntaxNodeType::ArrayIndexingExpression then [array_id, open_token, index, closed_token]
+      when SyntaxNodeType::ArrayIndexingAssignmentExpression then [array_indexing_expression, value]
+      when SyntaxNodeType::BuiltinFunctionExpression then [name, args]
+      else
+        raise 'Unreachable'
+      end
     end
 
     def debug_print!
       pretty_print_tree self
       nil
     end
-  end
 
-  class BinaryExpressionSyntax < ExpressionSyntax
-    attr_reader :left, :operator, :right
-
-    def initialize(left, operator, right)
-      super(SyntaxKind::BinaryExpression, [left, operator, right])
-      @left = left
-      @operator = operator
-      @right = right
+    def inspect
+      <<~TEXT
+        SyntaxNode(#{kind})
+          #{children_for_kind.join("\n")}
+      TEXT
     end
   end
 
-  class NumberExpressionSyntax < ExpressionSyntax
-    attr_reader :kind, :token, :is_integer
+  class GlobalScope < SyntaxNode
+    attr_accessor :variables
 
-    def initialize(token)
-      super(kind, [token])
-      @token = token
-      @is_integer = token.value.is_a? Integer
+    def initialize(variables = {})
+      super(
+        :GLOBAL_SCOPE,
+        children: [],
+      )
+
+      @variables = variables
     end
   end
 
-  class StringExpressionSyntax < ExpressionSyntax
-    attr_reader :kind, :token
+  SyntaxNodeType = enum %w[
+    BaseExpression
 
-    def initialize(token)
-      super(kind, [])
-      @token = token
-    end
-  end
+    NumberExpression
+    StringExpression
 
-  class ParenthesizedExpressionSyntax < ExpressionSyntax
-    attr_reader :kind, :open_token, :expression, :closed_token
+    IdentifierExpression
+    AssignmentExpression
 
-    def initialize(open_token, expression, closed_token)
-      super(SyntaxKind::ParenthesizedExpression, [open_token, expression, closed_token])
-      @open_token = open_token
-      @expression = expression
-      @closed_token = closed_token
-    end
-  end
+    BinaryExpression
+    ParenthesizedExpression
 
-  class ArrayExpressionSyntax < ExpressionSyntax
-    attr_reader :kind, :open_token, :items, :closed_token
+    ArrayExpression
+    ArrayIndexingExpression
+    ArrayIndexingAssignmentExpression
 
-    def initialize(open_token, items, closed_token)
-      super(SyntaxKind::ArrayExpression, [open_token, items, closed_token])
-      @open_token = open_token
-      @items = items
-      @closed_token = closed_token
-    end
-  end
-
-  class ArrayIndexingExpressionSyntax < ExpressionSyntax
-    attr_reader :kind, :array_id, :open_token, :index, :closed_token
-
-    def initialize(array_id, open_token, index, closed_token)
-      super(SyntaxKind::ArrayExpression, [array_id, open_token, index, closed_token])
-      @array_id = array_id
-      @open_token = open_token
-      @index = index
-      @closed_token = closed_token
-    end
-  end
-
-  class ArrayIndexingAssignmentExpressionSyntax < ExpressionSyntax
-    attr_reader :kind, :array_indexing_expression, :right
-
-    def initialize(array_indexing_expression, right)
-      super(SyntaxKind::ArrayExpression, [array_indexing_expression, right])
-      @array_indexing_expression = array_indexing_expression
-      @right = right
-    end
-  end
-
-  class IdentifierExpressionSyntax < ExpressionSyntax
-    attr_reader :id
-
-    def initialize(id)
-      super(SyntaxKind::IdentifierToken, [id])
-      @id = id
-    end
-  end
-
-  class AssignmentExpressionSyntax < ExpressionSyntax
-    attr_reader :id, :value
-
-    def initialize(id, value)
-      super(SyntaxKind::AssignmentToken, [id, value])
-      @id = id
-      @value = value
-    end
-  end
-
-  class BuiltinFunctionSyntax < ExpressionSyntax
-    attr_reader :name, :args
-
-    def initialize(name, args)
-      super(SyntaxKind::BuiltinFunction, [name, args])
-      @name = name
-      @args = args
-    end
-  end
+    BuiltinFunctionExpression
+  ].freeze
 end

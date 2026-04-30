@@ -18,8 +18,8 @@ def print_help
   TEXT
 end
 
-def evaluate_expression(tree, variables = {})
-  evaluator = Syntax::Evaluator.new(tree.root, variables, Syntax::GlobalScope.new)
+def evaluate_expression(tree)
+  evaluator = Syntax::Evaluator.new(tree.root, Syntax::GlobalScope.new)
 
   # print the evaluation of each line:
 
@@ -36,8 +36,6 @@ def print_diagnostics(container)
 end
 
 def repl_loop(show_tree)
-  variables = {}
-
   loop do
     print '> '
     line = gets.strip
@@ -83,7 +81,7 @@ def compile_and_execute(file, show_tree)
     Syntax::Evaluator.eval_tree! tree, variables
   end
 
-  pretty_print_tree(tree) if show_tree
+  pretty_print_tree(tree.root) if show_tree
 
   exit
 end

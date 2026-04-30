@@ -7,7 +7,7 @@ module Syntax
     attr_reader :position, :text, :value
 
     def initialize(kind, position, text, value)
-      super(kind, []) # don't pass Token properties as children
+      super(kind, children: []) # don't pass Token properties as children
 
       @position = position
       @text = text

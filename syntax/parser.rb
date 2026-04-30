@@ -66,7 +66,7 @@ module Syntax
 
         operator = next_token
         right = parse_expression(precedence)
-        left = BinaryExpressionSyntax.new(left, operator, right)
+        left = SyntaxNode.new(SyntaxNodeType::BinaryExpression, left:, operator:, right:)
       end
 
       left
@@ -115,7 +115,7 @@ module Syntax
                    end
 
         right = parse_primary_expr
-        left = BinaryExpressionSyntax.new(left, operator, right)
+        left = SyntaxNode.new(SyntaxNodeType::BinaryExpression, left:, operator:, right:)
       end
 
       left
@@ -125,13 +125,17 @@ module Syntax
       case current.kind
       when SyntaxKind::OpenParenthesisToken then parse_parenthesized
       when SyntaxKind::OpenBracketToken then parse_array
-      when SyntaxKind::NumberToken then NumberExpressionSyntax.new(next_token)
+      when SyntaxKind::NumberToken
+        token = next_token
+        is_integer = token.value.is_a? Integer
+
+        SyntaxNode.new(SyntaxNodeType::NumberExpression, token:, is_integer:)
       when SyntaxKind::IdentifierToken then parse_id
-      when SyntaxKind::StringToken then StringExpressionSyntax.new(next_token)
+      when SyntaxKind::StringToken then SyntaxNode.new(SyntaxNodeType::StringExpression, token: next_token)
       when SyntaxKind::BuiltinFunction
         name = next_token
         args = parse_expression
-        BuiltinFunctionSyntax.new(name, args)
+        SyntaxNode.new(SyntaxNodeType::BuiltinFunctionExpression, name:, args:)
       else
         prev = peek(-1)
 
@@ -149,34 +153,39 @@ module Syntax
         _assignment_op = match(SyntaxKind::AssignmentToken)
         right = parse_expression
 
-        return AssignmentExpressionSyntax.new(id, right)
+        return SyntaxNode.new(SyntaxNodeType::AssignmentExpression, id:, value: right)
 
       elsif current.kind == SyntaxKind::OpenBracketToken
         index_open_bracket = match(SyntaxKind::OpenBracketToken)
         index = next_token
         index_close_bracket = match(SyntaxKind::CloseBracketToken)
 
-        aie = ArrayIndexingExpressionSyntax.new(id, index_open_bracket, index, index_close_bracket)
+        aie = SyntaxNode.new(SyntaxNodeType::ArrayIndexingExpression,
+                             array_id: id,
+                             open_token: index_open_bracket,
+                             index:,
+                             closed_token: index_close_bracket)
 
         if current.kind == SyntaxKind::AssignmentToken
           next_token
 
           right = parse_expression
 
-          return ArrayIndexingAssignmentExpressionSyntax.new(aie, right)
+          return SyntaxNode.new(SyntaxNodeType::ArrayIndexingAssignmentExpression, array_indexing_expression: aie, right:)
         end
 
         return aie
       end
 
-      IdentifierExpressionSyntax.new(id)
+      SyntaxNode.new(SyntaxNodeType::IdentifierExpression, id:)
     end
 
     def parse_parenthesized
       left = next_token
-      expr = parse_expression
+      expression = parse_expression
       right = match(SyntaxKind::CloseParenthesisToken)
-      ParenthesizedExpressionSyntax.new(left, expr, right)
+
+      SyntaxNode.new(SyntaxNodeType::ParenthesizedExpression, open_token: left, expression:, closed_token: right)
     end
 
     def parse_array
@@ -193,7 +202,7 @@ module Syntax
 
       right = match(SyntaxKind::CloseBracketToken)
 
-      ArrayExpressionSyntax.new(left, body, right)
+      SyntaxNode.new(SyntaxNodeType::ArrayExpression, open_token: left, items: body, closed_token: right)
     end
   end
 end

@@ -3,13 +3,6 @@
 require 'spec_helper'
 
 RSpec.describe 'Testing variables', type: :feature do
-  let(:evaluator) { Syntax::Evaluator }
-  let(:variables) { {} }
-
-  before do
-    @eval = ->(root, variables) { evaluator.eval_tree!(root, variables) }
-  end
-
   describe 'creating a string' do
     context 'when it\'s just a plain token' do
       let(:text) do
@@ -21,7 +14,7 @@ RSpec.describe 'Testing variables', type: :feature do
 
       it 'creates strings with single and double quotes' do
         expect do
-          @eval.call(Syntax::SyntaxTree.parse(text), variables)
+          perform_evaluation!(text)
         end.not_to raise_error
       end
     end
@@ -29,8 +22,9 @@ RSpec.describe 'Testing variables', type: :feature do
     context 'when used as a variable' do
       shared_examples 'evaluates as a string variable' do
         it 'evaluates correctly' do
+          variables = {}
           expect do
-            @eval.call(Syntax::SyntaxTree.parse(text), variables)
+            variables = perform_evaluation!(text).root.variables
           end.not_to raise_error
 
           expect(variables.count).to eq 1
@@ -72,8 +66,9 @@ RSpec.describe 'Testing variables', type: :feature do
       end
 
       it 'concatenates the string correctly' do
+        variables = {}
         expect do
-          @eval.call(Syntax::SyntaxTree.parse(text_with_concat), variables)
+          variables = perform_evaluation!(text_with_concat).root.variables
         end.not_to raise_error
 
         expect(variables.count).to eq 3
@@ -94,7 +89,7 @@ RSpec.describe 'Testing variables', type: :feature do
           TEXT
 
           expect do
-            @eval.call(Syntax::SyntaxTree.parse(text), variables)
+            perform_evaluation!(text)
           end.to raise_error(RuntimeError, "Operator #{operator} is not applicable to strings.")
         end
       end
@@ -114,7 +109,7 @@ RSpec.describe 'Testing variables', type: :feature do
           TEXT
 
           expect do
-            @eval.call(Syntax::SyntaxTree.parse(text), variables)
+            perform_evaluation!(text)
           end.to raise_error(
             RuntimeError,
             "Operator #{operator} is not applicable to \"Hello, \" and \"#{number_value}\""
