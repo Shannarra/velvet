@@ -80,14 +80,25 @@ module Syntax
       pretty_print_tree self
       nil
     end
+
+    def inspect
+      <<~TEXT
+        SyntaxNode(#{kind})
+          #{children_for_kind.join("\n")}
+      TEXT
+    end
   end
 
   class GlobalScope < SyntaxNode
-    def initialize
+    attr_accessor :variables
+
+    def initialize(variables = {})
       super(
         :GLOBAL_SCOPE,
         children: [],
       )
+
+      @variables = variables
     end
   end
 

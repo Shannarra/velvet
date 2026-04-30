@@ -4,21 +4,21 @@ module Syntax
   class Evaluator # rubocop:disable Metrics/ClassLength
     attr_reader :diagnostics
 
-    def initialize(root, variables, parent_scope)
+    def initialize(root, parent_scope)
       @root = root
-      @variables = variables
       @diagnostics = []
       @parent_scope = parent_scope
+      @variables = parent_scope.variables
     end
 
     def eval!
       evaluate_expr! @root
     end
 
-    def self.eval_tree!(tree, variables)
+    def self.eval_tree!(tree)
       diagnostics = []
       tree.root.children.each do |sub|
-        ev = new(sub.root, variables, tree.scope)
+        ev = new(sub.root, tree.scope)
 
         ev.eval!
 

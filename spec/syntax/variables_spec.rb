@@ -3,13 +3,6 @@
 require 'spec_helper'
 
 RSpec.describe 'Testing variables', type: :feature do
-  let(:evaluator) { Syntax::Evaluator }
-  let(:variables) { {} }
-
-  before do
-    @eval = ->(root, variables) { evaluator.eval_tree!(root, variables) }
-  end
-
   context 'when creating a new variable' do
     describe 'creates variables correctly' do
       let(:text) do
@@ -21,7 +14,7 @@ RSpec.describe 'Testing variables', type: :feature do
       end
 
       it 'creates two variables and adds them' do
-        @eval.call(Syntax::SyntaxTree.parse(text), variables)
+        variables = perform_evaluation!(text).root.variables
 
         expect(variables['a']).to have_attributes(value: 1, kind: Syntax::SyntaxKind::NumberToken)
         expect(variables['b']).to have_attributes(value: 2, kind: Syntax::SyntaxKind::NumberToken)
@@ -41,8 +34,7 @@ RSpec.describe 'Testing variables', type: :feature do
       end
 
       it 'calculates the best number ever' do
-        tree = Syntax::SyntaxTree.parse(text_with_many_variables)
-        @eval.call(tree, variables)
+        variables = perform_evaluation!(text_with_many_variables).root.variables
 
         expect(variables['nice']).to have_attributes(value: 69, kind: Syntax::SyntaxKind::NumberToken)
 
@@ -67,7 +59,7 @@ RSpec.describe 'Testing variables', type: :feature do
       let(:expected_result_value) { -277_695.639_560_439_57 }
 
       it 'can create complex variables and perform all calculations' do
-        @eval.call(Syntax::SyntaxTree.parse(text_with_complex_variables), variables)
+        variables = perform_evaluation!(text_with_complex_variables).root.variables
 
         expect(variables['result']).to have_attributes(value: expected_result_value, kind: Syntax::SyntaxKind::NumberToken)
       end
@@ -81,14 +73,14 @@ RSpec.describe 'Testing variables', type: :feature do
 
     it 'errors but does not kill the process' do
       expect do
-        @eval.call(Syntax::SyntaxTree.parse(text_using_nonexistent_var), variables)
+        perform_evaluation!(text_using_nonexistent_var)
       end.to raise_error(RuntimeError, 'Unknown variable "a" at 1:9')
     end
   end
 
   shared_examples 'commented expressions with result = 69' do
     it 'ignores the comment and produces the correct result' do
-      @eval.call(Syntax::SyntaxTree.parse(text_with_comments), variables)
+      variables = perform_evaluation!(text_with_comments).root.variables
 
       expect(variables['result']).to have_attributes(value: 69, kind: Syntax::SyntaxKind::NumberToken)
     end

@@ -3,13 +3,6 @@
 require 'spec_helper'
 
 RSpec.describe 'Testing variables', type: :feature do
-  let(:evaluator) { Syntax::Evaluator }
-  let(:variables) { {} }
-
-  before do
-    @eval = ->(root, variables) { evaluator.eval_tree!(root, variables) }
-  end
-
   describe 'creating an array' do
     context 'when it\'s just a plain token' do
       let(:text) do
@@ -20,7 +13,7 @@ RSpec.describe 'Testing variables', type: :feature do
 
       it 'creates an array of strings with single and double quotes' do
         expect do
-          @eval.call(Syntax::SyntaxTree.parse(text), variables)
+          perform_evaluation!(text)
         end.not_to raise_error
       end
     end
@@ -33,8 +26,10 @@ RSpec.describe 'Testing variables', type: :feature do
       end
 
       it 'creates an array of strings with single and double quotes' do
+        variables = {}
+
         expect do
-          @eval.call(Syntax::SyntaxTree.parse(text), variables)
+          variables = perform_evaluation!(text).root.variables
         end.not_to raise_error
 
         expect(variables['array'].value).to match_array(
@@ -62,8 +57,10 @@ RSpec.describe 'Testing variables', type: :feature do
       end
 
       it 'creates an array of strings with single and double quotes' do
+        variables = {}
+
         expect do
-          @eval.call(Syntax::SyntaxTree.parse(text), variables)
+          variables = perform_evaluation!(text).root.variables
         end.not_to raise_error
 
         expect(variables['array'].value).to match_array(
@@ -91,9 +88,12 @@ RSpec.describe 'Testing variables', type: :feature do
       end
 
       it 'creates an array of strings with single and double quotes' do
+        variables = {}
+
         expect do
-          @eval.call(Syntax::SyntaxTree.parse(text), variables)
+          variables = perform_evaluation!(text).root.variables
         end.not_to raise_error
+
         expect(variables['index']).to have_attributes(value: 2, kind: Syntax::SyntaxKind::NumberToken)
 
         expect(variables['array'].value).to match_array(
@@ -119,12 +119,14 @@ RSpec.describe 'Testing variables', type: :feature do
       end
 
       it 'creates an array of strings with single and double quotes' do
+        scope = nil
+
         expect do
-          @eval.call(Syntax::SyntaxTree.parse(text), variables)
+          scope = Syntax::SyntaxTree.parse(text)
+          @eval.call(scope)
         end.to raise_error(RuntimeError, 'Unexpected token <StringToken>. Expected <CommaToken> at 1:23')
 
-        expect(variables['index']).to be_nil
-        expect(variables['array']).to be_nil
+        expect(scope&.root&.variables).to be_nil
       end
     end
   end
