@@ -97,7 +97,7 @@ module Syntax
                     when 'end'
                       SyntaxKind::KWRD_END
                     else
-                      raise 'Unreachable'
+                      raise "Unknown keyword \"#{token}\""
                     end
 
       Token.new(kword_type, @position.dup, token, nil)

@@ -120,5 +120,55 @@ RSpec.describe 'Testing conditions', type: :feature do
         end
       end
     end
+
+    describe 'multi-branch conditions' do
+      context 'when any condition IS satisfied' do
+        let(:text) do
+          <<~TEXT
+            if 1 == 3 do
+            	 puts "1 ?= 3???"
+            else if 2 == 3 do
+            	 puts "2 ?= 3???"
+            else if 3 == 3 do
+            	 puts "3 does, in fact, equal 3 :)"
+            else
+            	 puts "This should have never been printed."
+            end
+
+            puts "I live outside the condition"
+          TEXT
+        end
+
+        it 'executes the branch that satisfies the condition' do
+          expect do
+            perform_evaluation!(text)
+          end.to output("3 does, in fact, equal 3 :)\nI live outside the condition\n").to_stdout
+        end
+      end
+
+      context 'when condition is NOT satisfied' do
+        let(:text) do
+          <<~TEXT
+            if 1 == 3 do
+            	 puts "1 ?= 3???"
+            else if 2 == 3 do
+            	 puts "2 ?= 3???"
+            else if 11 == 3 do
+            	 puts "11 ?= 3??"
+            else
+            	 puts "None of the above."
+            end
+
+            puts "I live outside the condition"
+          TEXT
+        end
+
+        it 'executes the condition' do
+          expect do
+            perform_evaluation!(text)
+          end.to output("None of the above.\nI live outside the condition\n").to_stdout
+        end
+      end
+    end
   end
 end

@@ -236,7 +236,7 @@ module Syntax
     def parse_body(keyword:)
       body_items = []
 
-      until [SyntaxKind::KWRD_ELSE, SyntaxKind::KWRD_END].include?(current.kind)
+      until [SyntaxKind::KWRD_ELSE, SyntaxKind::KWRD_END, SyntaxKind::EOFToken].include?(current.kind)
         expr = parse_expression
 
         body_items << expr
