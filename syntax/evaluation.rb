@@ -249,9 +249,13 @@ module Syntax
     def evaluate_condition(expr)
       condition = evaluate_expr! expr.condition
 
-      index = condition.value ? 1 : 0
+      if expr.condition_branches.count > 1
+        index = condition.token.value ? 0 : 1
 
-      evaluate_expr!(expr.condition_branches[index])
+        evaluate_expr!(expr.condition_branches[index])
+      elsif condition.token.value
+        evaluate_expr! expr.condition_branches.first
+      end
     end
 
     def evaluate_body(expr)

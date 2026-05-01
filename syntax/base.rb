@@ -80,7 +80,8 @@ module Syntax
         SyntaxKind::OpenParenthesisToken,
         SyntaxKind::CloseParenthesisToken,
         SyntaxKind::AssignmentToken,
-        SyntaxKind::EqualityToken
+        SyntaxKind::EqualityToken,
+        SyntaxKind::InequalityToken
       ].freeze
 
       KEYWORDS = [
