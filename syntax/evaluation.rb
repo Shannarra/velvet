@@ -31,6 +31,7 @@ module Syntax
     EVALUATION_METHODS = {
       NumberExpression: :self_token,
       StringExpression: :self_token,
+      BooleanExpression: :self_token,
       IdentifierExpression: :evaluate_identifier,
       AssignmentExpression: :evaluate_assignment,
       ParenthesizedExpression: :evaluate_sub_expr,
@@ -39,7 +40,9 @@ module Syntax
       ArrayIndexingExpression: :evaluate_array_indexing,
       ArrayIndexingAssignmentExpression: :evaluate_array_indexing_assignment,
       GlobalScope: :evaluate_global_scope,
-      BuiltinFunctionExpression: :evaluate_builtin_function
+      BuiltinFunctionExpression: :evaluate_builtin_function,
+      IfExpression: :evaluate_condition,
+      BodyExpression: :evaluate_body
     }.freeze
 
     private
@@ -77,7 +80,7 @@ module Syntax
       right = evaluate_expr!(expr.right)
       operator = expr.operator
 
-      eval_binary_expr(left, operator, right)
+      eval_binary_expr(expr, left, operator, right)
     end
 
     def evaluate_array(expr)
@@ -121,17 +124,38 @@ module Syntax
       )
     end
 
-    def eval_binary_expr(left, operator, right)
+    def eval_binary_expr(expr, left, operator, right)
       if left.kind == SyntaxKind::NumberToken &&
          right.kind == SyntaxKind::NumberToken
 
         left_value = left.value
         right_value = right.value
 
+        if operator.kind == SyntaxKind::EqualityToken
+          return SyntaxNode.new(
+            SyntaxNodeType::BooleanExpression,
+            token: new_eval_token(
+              SyntaxKind::BooleanToken,
+              left,
+              left_value == right_value
+            )
+          )
+
+        elsif operator.kind == SyntaxKind::InequalityToken
+          return SyntaxNode.new(
+            SyntaxNodeType::BooleanExpression,
+            token: new_eval_token(
+              SyntaxKind::BooleanToken,
+              left,
+              left_value != right_value
+            )
+          )
+        end
+
         new_eval_token(
           SyntaxKind::NumberToken,
           left,
-          apply_numeric_operator(left_value, operator, right_value)
+          apply_numeric_operator(expr, left_value, operator, right_value)
         )
       elsif left.kind == SyntaxKind::StringToken &&
             right.kind == SyntaxKind::StringToken
@@ -152,7 +176,7 @@ module Syntax
       end
     end
 
-    def apply_numeric_operator(left, operator, right)
+    def apply_numeric_operator(expr, left, operator, right)
       case operator.kind
       when SyntaxKind::PlusToken then left + right
       when SyntaxKind::MinusToken then left - right
@@ -188,8 +212,12 @@ module Syntax
       index_token = given_index_token
 
       if given_index_token.kind == SyntaxKind::IdentifierToken
-        index_token = evaluate_expr!(SyntaxNode.new(SyntaxNodeType::IdentifierExpression,
-                                                    id: given_index_token))
+        index_token = evaluate_expr!(
+          SyntaxNode.new(
+            SyntaxNodeType::IdentifierExpression,
+            id: given_index_token
+          )
+        )
       end
 
       index_token
@@ -204,7 +232,12 @@ module Syntax
     end
 
     def evaluate_array_indexing_assignment(expr)
-      array_token = evaluate_expr!(SyntaxNode.new(SyntaxNodeType::IdentifierExpression, id: expr.array_indexing_expression.array_id))
+      array_token = evaluate_expr!(
+        SyntaxNode.new(
+          SyntaxNodeType::IdentifierExpression,
+          id: expr.array_indexing_expression.array_id
+        )
+      )
 
       index_value = array_index_token(array_token, expr.array_indexing_expression.index).value
 
@@ -213,12 +246,28 @@ module Syntax
       array_token
     end
 
+    def evaluate_condition(expr)
+      condition = evaluate_expr! expr.condition
+
+      index = condition.value ? 1 : 0
+
+      evaluate_expr!(expr.condition_branches[index])
+    end
+
+    def evaluate_body(expr)
+      expr.body_items.map do |subtree|
+        evaluate_expr! subtree
+      end
+    end
+
     def builtin_puts(arg)
       case arg.kind
       when SyntaxKind::ArrayExpression
         arg.value.each do |sub|
           builtin_puts(sub)
         end
+      when SyntaxNodeType::BooleanExpression
+        builtin_puts(arg.token)
       else
         puts arg.value
       end
@@ -232,6 +281,8 @@ module Syntax
           builtin_print(sub)
         end
         print ']'
+      when SyntaxNodeType::BooleanExpression
+        builtin_print(arg.token)
       else
         print arg.value
       end

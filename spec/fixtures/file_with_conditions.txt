@@ -1,0 +1,53 @@
+a = 17*2
+b = 35
+
+if a+b == 69 do
+	 puts "Nice."
+
+	 c = a + b
+
+	 print "Value of c: "
+	 puts c
+
+	 if c + 1 == 70 do
+	 		puts "ok!"
+	 else
+			puts "fuck me ;("
+	 end
+else
+	puts "Wtf?"
+end
+
+if a == 34 do
+	 print "a = "
+	 puts a
+
+	 if b == 35 do
+	 	 print "b = "
+		 puts b
+
+		 if a + b == 69 do
+		 		puts "Nice!"
+		 else
+				puts "Not nice ;("
+		 end
+	 else
+			puts "b is not 35??"
+	 end
+else
+	puts "a is not 34???"
+end
+
+
+puts "Do inner values leak?"
+
+# did_i_leak = "I did NOT leak!"
+
+if a+1 == b do
+	 did_i_leak = "I leaked ;("
+end
+
+# Values created within conditions DO leak
+# to their parent scope. This will be resolved later.
+print "Did it leak?: "
+puts did_i_leak

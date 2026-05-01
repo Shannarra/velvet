@@ -8,7 +8,9 @@ module Syntax
     def binary_operator_precedence(kind)
       case kind
       when SyntaxKind::StarToken, SyntaxKind::SlashToken, SyntaxKind::DoubleStarToken then 2
-      when SyntaxKind::PlusToken, SyntaxKind::MinusToken then 1
+      when SyntaxKind::PlusToken, SyntaxKind::MinusToken,
+           SyntaxKind::EqualityToken, SyntaxKind::InequalityToken
+        1
       else 0
       end
     end
@@ -136,6 +138,7 @@ module Syntax
         name = next_token
         args = parse_expression
         SyntaxNode.new(SyntaxNodeType::BuiltinFunctionExpression, name:, args:)
+      when *Constants::Kinds::KEYWORDS then parse_keyword
       else
         prev = peek(-1)
 
@@ -203,6 +206,45 @@ module Syntax
       right = match(SyntaxKind::CloseBracketToken)
 
       SyntaxNode.new(SyntaxNodeType::ArrayExpression, open_token: left, items: body, closed_token: right)
+    end
+
+    def parse_keyword
+      if current.kind == SyntaxKind::KWRD_IF # rubocop:disable Style/GuardClause
+        keyword = next_token
+
+        condition = parse_expression
+        cond = SyntaxNode.new(SyntaxNodeType::IfExpression, keyword:, condition:, condition_branches: [])
+
+        match(SyntaxKind::KWRD_DO)
+
+        body = parse_body(keyword: SyntaxKind::KWRD_DO)
+        cond.condition_branches << body
+
+        if current.kind != SyntaxKind::KWRD_END
+          next_token
+          cond.condition_branches << parse_body(keyword: SyntaxKind::KWRD_ELSE)
+        end
+
+        next_token
+
+        cond
+      else
+        raise "Unknown keyword #{current.kind}"
+      end
+    end
+
+    def parse_body(keyword:)
+      body_items = []
+
+      until [SyntaxKind::KWRD_ELSE, SyntaxKind::KWRD_END].include?(current.kind)
+        expr = parse_expression
+
+        body_items << expr
+      end
+
+      body_end = current
+
+      SyntaxNode.new(SyntaxNodeType::BodyExpression, keyword:, body_items:, body_end:)
     end
   end
 end

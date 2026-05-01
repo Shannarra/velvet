@@ -15,7 +15,11 @@ module Syntax
                 :array_indexing_expression,
                 :id,
                 :value,
-                :name, :args
+                :name, :args,
+                :keyword,
+                :condition,
+                :condition_branches,
+                :body_items, :body_end
 
     # rubocop:disable Metrics/ParameterLists
     def initialize(kind, children: nil,
@@ -27,7 +31,10 @@ module Syntax
                    array_indexing_expression: nil, # binary expressions
                    id: nil, # binary expressions
                    value: nil, # binary expressions
-                   name: nil, args: nil) # binary expressions
+                   name: nil, args: nil, # built-in expressions
+                   keyword: nil, # generic keyword expression
+                   condition: nil, condition_branches: nil, # conditional expression
+                   body_items: nil, body_end: nil) # body expression
       # rubocop:enable Metrics/ParameterLists
       @kind = kind
       @left = left
@@ -46,6 +53,11 @@ module Syntax
       @value = value
       @name = name
       @args = args
+      @keyword = keyword
+      @condition = condition
+      @condition_branches = condition_branches
+      @body_items = body_items
+      @body_end = body_end
 
       @children = if children.nil?
                     children_for_kind
@@ -62,7 +74,9 @@ module Syntax
 
     def children_for_kind
       case kind
-      when SyntaxNodeType::NumberExpression, SyntaxNodeType::StringExpression then [token]
+      when SyntaxNodeType::NumberExpression,
+           SyntaxNodeType::StringExpression,
+           SyntaxNodeType::BooleanExpression then [token]
       when SyntaxNodeType::IdentifierExpression then [id]
       when SyntaxNodeType::AssignmentExpression then [id, value]
       when SyntaxNodeType::BinaryExpression then [left, operator, right]
@@ -71,21 +85,16 @@ module Syntax
       when SyntaxNodeType::ArrayIndexingExpression then [array_id, open_token, index, closed_token]
       when SyntaxNodeType::ArrayIndexingAssignmentExpression then [array_indexing_expression, value]
       when SyntaxNodeType::BuiltinFunctionExpression then [name, args]
+      when SyntaxNodeType::IfExpression then [keyword, condition, condition_branches]
+      when SyntaxNodeType::BodyExpression, SyntaxNodeType::ConditionalExpression then [keyword, body_items, body_end]
       else
-        raise 'Unreachable'
+        raise "Unknown children for kind #{kind}. Fix #{__FILE__}:#{__LINE__}"
       end
     end
 
     def debug_print!
       pretty_print_tree self
       nil
-    end
-
-    def inspect
-      <<~TEXT
-        SyntaxNode(#{kind})
-          #{children_for_kind.join("\n")}
-      TEXT
     end
   end
 
@@ -107,6 +116,7 @@ module Syntax
 
     NumberExpression
     StringExpression
+    BooleanExpression
 
     IdentifierExpression
     AssignmentExpression
@@ -119,5 +129,10 @@ module Syntax
     ArrayIndexingAssignmentExpression
 
     BuiltinFunctionExpression
+
+    ConditionalExpression
+    IfExpression
+    ElseExpression
+    BodyExpression
   ].freeze
 end

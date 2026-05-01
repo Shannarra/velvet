@@ -10,6 +10,7 @@ module Syntax
 
     StringToken
     NumberToken
+
     PlusToken
     MinusToken
     StarToken
@@ -37,16 +38,27 @@ module Syntax
 
     IdentifierToken
     BuiltinFunction
+
+    KWRD_IF
+    KWRD_ELSE
+    KWRD_DO
+    KWRD_END
+
+    EqualityToken
+    InequalityToken
+    BooleanToken
   ]
 
   module Constants
     module Values
       SPACES = [' ', "\n", "\t"].freeze
-      OPERATORS = %w[+ - * ** / ( ) [ ] =].freeze
+      OPERATORS = %w[+ - * ** / ( ) [ ] = == !=].freeze
       COMMENT = '#'
       EOF = '\0'
 
       NON_ALPHA = [*SPACES, *OPERATORS, EOF].freeze
+
+      KEYWORDS = %w[if do else end].freeze
     end
 
     module Builtin
@@ -67,7 +79,15 @@ module Syntax
         SyntaxKind::SlashToken,
         SyntaxKind::OpenParenthesisToken,
         SyntaxKind::CloseParenthesisToken,
-        SyntaxKind::AssignmentToken
+        SyntaxKind::AssignmentToken,
+        SyntaxKind::EqualityToken
+      ].freeze
+
+      KEYWORDS = [
+        SyntaxKind::KWRD_IF,
+        SyntaxKind::KWRD_ELSE,
+        SyntaxKind::KWRD_DO,
+        SyntaxKind::KWRD_END
       ].freeze
 
       COMMENT = SyntaxKind::CommentToken

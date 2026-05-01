@@ -70,7 +70,6 @@ end
 def compile_and_execute(file, show_tree)
   error! "File #{file} does not exist." unless File.exist? file
 
-  variables = {}
   contents = File.read file
 
   tree = Syntax::SyntaxTree.parse(contents)
@@ -78,7 +77,7 @@ def compile_and_execute(file, show_tree)
   if tree.diagnostics.flatten.any?
     print_diagnostics(tree)
   else
-    Syntax::Evaluator.eval_tree! tree, variables
+    Syntax::Evaluator.eval_tree! tree
   end
 
   pretty_print_tree(tree.root) if show_tree
