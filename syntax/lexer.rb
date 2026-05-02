@@ -96,6 +96,10 @@ module Syntax
                       SyntaxKind::KWRD_DO
                     when 'end'
                       SyntaxKind::KWRD_END
+                    when 'true'
+                      SyntaxKind::KWRD_TRUE
+                    when 'false'
+                      SyntaxKind::KWRD_FALSE
                     else
                       raise "Unknown keyword \"#{token}\""
                     end

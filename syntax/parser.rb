@@ -209,7 +209,7 @@ module Syntax
     end
 
     def parse_keyword
-      if current.kind == SyntaxKind::KWRD_IF # rubocop:disable Style/GuardClause
+      if current.kind == SyntaxKind::KWRD_IF
         keyword = next_token
 
         condition = parse_expression
@@ -228,8 +228,11 @@ module Syntax
         next_token
 
         cond
+      elsif [SyntaxKind::KWRD_TRUE, SyntaxKind::KWRD_FALSE].include?(current.kind)
+        SyntaxNode.new(SyntaxNodeType::BooleanExpression, token: current)
+        next_token
       else
-        raise "Unknown keyword #{current.kind}"
+        raise "Unexpected keyword \"#{current.text}\" found at #{current.start_printing_position}"
       end
     end
 

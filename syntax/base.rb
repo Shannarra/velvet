@@ -44,8 +44,12 @@ module Syntax
     KWRD_DO
     KWRD_END
 
+    KWRD_TRUE
+    KWRD_FALSE
+
     EqualityToken
     InequalityToken
+
     BooleanToken
   ]
 
@@ -58,7 +62,7 @@ module Syntax
 
       NON_ALPHA = [*SPACES, *OPERATORS, EOF].freeze
 
-      KEYWORDS = %w[if do else end].freeze
+      KEYWORDS = %w[if do else end true false].freeze
     end
 
     module Builtin
@@ -88,7 +92,9 @@ module Syntax
         SyntaxKind::KWRD_IF,
         SyntaxKind::KWRD_ELSE,
         SyntaxKind::KWRD_DO,
-        SyntaxKind::KWRD_END
+        SyntaxKind::KWRD_END,
+        SyntaxKind::KWRD_TRUE,
+        SyntaxKind::KWRD_FALSE
       ].freeze
 
       COMMENT = SyntaxKind::CommentToken

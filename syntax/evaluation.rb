@@ -42,19 +42,37 @@ module Syntax
       GlobalScope: :evaluate_global_scope,
       BuiltinFunctionExpression: :evaluate_builtin_function,
       IfExpression: :evaluate_condition,
-      BodyExpression: :evaluate_body
+      BodyExpression: :evaluate_body,
+      KWRD_TRUE: :wrap_to_node,
+      KWRD_FALSE: :wrap_to_node
     }.freeze
 
     private
 
     def evaluate_expr!(expr)
-      raise "Unexpected node \"#{expr.kind}\" - I don't know how to handle it." unless EVALUATION_METHODS.key?(expr.kind.to_sym)
+      unless EVALUATION_METHODS.key?(expr.kind.to_sym)
+        raise "[EVALUATION]: Unexpected node \"#{expr.kind}\" - I don't know how to handle it."
+      end
 
       __send__(EVALUATION_METHODS[expr.kind.to_sym], expr)
     end
 
     def self_token(expr)
       expr.token
+    end
+
+    def wrap_to_node(expr)
+      type = case expr.kind
+             when SyntaxKind::KWRD_TRUE, SyntaxKind::KWRD_FALSE
+               SyntaxNodeType::BooleanExpression
+             else
+               raise "Could not wrap expression #{expr} into node"
+             end
+
+      SyntaxNode.new(
+        type,
+        token: expr
+      )
     end
 
     def evaluate_identifier(expr)
