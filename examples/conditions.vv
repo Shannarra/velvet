@@ -1,3 +1,17 @@
+puts unleak
+
+first = true
+
+second = false
+
+if first && second do
+	 puts "both are true"
+else if first || second do
+	 puts "at least one is true"
+else
+	puts "Neither first or second is true :("
+end
+
 print '1 != 2? : '
 puts 1!=2
 
@@ -10,6 +24,11 @@ if a + b == 69 do
   puts "Nice!"
 end
 
+if first && (a + b == 69) do
+	 puts "Nice BLYAT"
+else
+	puts "WTF"
+end
 
 if a < b do
 	 puts "A is less than B"

@@ -53,12 +53,15 @@ module Syntax
     InequalityToken
 
     BooleanToken
+
+    BooleanAND
+    BooleanOR
   ]
 
   module Constants
     module Values
       SPACES = [' ', "\n", "\t"].freeze
-      OPERATORS = %w[+ - * ** / ( ) [ ] = == != < >].freeze
+      OPERATORS = %w[+ - * ** / ( ) [ ] = == != < > && ||].freeze
       COMMENT = '#'
       EOF = '\0'
 
@@ -81,7 +84,9 @@ module Syntax
         SyntaxKind::LessThanToken,
         SyntaxKind::GreaterThanToken,
         SyntaxKind::EqualityToken,
-        SyntaxKind::InequalityToken
+        SyntaxKind::InequalityToken,
+        SyntaxKind::BooleanAND,
+        SyntaxKind::BooleanOR
       ].freeze
 
       NUMERIC_OPERATORS = [

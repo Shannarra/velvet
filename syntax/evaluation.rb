@@ -172,8 +172,16 @@ module Syntax
         end
 
         raise "Operator #{operator.text} is not applicable to strings."
+      elsif left.kind == SyntaxNodeType::BooleanExpression &&
+            right.kind == SyntaxNodeType::BooleanExpression
+
+        unless Constants::Kinds::BOOLEAN_OPERATORS.include?(operator.kind)
+          raise "Operator #{operator.kind} is not applicable to boolean expressions"
+        end
+
+        apply_boolean_operator(expr, left.token, operator, right.token)
       else
-        raise "Operator #{operator.text} is not applicable to \"#{left.value}\" and \"#{right.value}\""
+        raise "Operator #{operator.text} is not applicable to \"#{left.value}\" (#{left.kind}) and \"#{right.value}\" (#{right.kind})"
       end
     end
 
@@ -198,6 +206,8 @@ module Syntax
               when SyntaxKind::GreaterThanToken then left.value > right.value
               when SyntaxKind::EqualityToken then left.value == right.value
               when SyntaxKind::InequalityToken then left.value != right.value
+              when SyntaxKind::BooleanAND then left.value && right.value
+              when SyntaxKind::BooleanOR then left.value || right.value
               else raise "Unexpected binary operator #{expr.operator.kind}".error!
               end
 

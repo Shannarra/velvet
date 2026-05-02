@@ -52,6 +52,16 @@ module Syntax
 
                get_next
                SyntaxKind::InequalityToken
+             when '&'
+               raise 'unexpected &' unless @text[@ip + 1] == current
+
+               get_next
+               SyntaxKind::BooleanAND
+             when '|'
+               raise 'unexpected |' unless @text[@ip + 1] == current
+
+               get_next
+               SyntaxKind::BooleanOR
              when '='
                if @text[@ip + 1] == current
                  get_next

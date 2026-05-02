@@ -4,16 +4,53 @@ require 'spec_helper'
 
 RSpec.describe 'Testing conditions', type: :feature do
   describe 'using booleans' do
-    # context 'when using boolean values' do
-    #   let(:text) do
-    #     <<~TEXT
-    #       a = true
-    #       b = false
+    describe 'when using boolean values' do
+      context 'when multipple branches have ONLY ONE truthy value' do
+        let(:text) do
+          <<~TEXT
+            first = true
+            second = false
 
-    #       if a || bb
-    #     TEXT
-    #   end
-    # end
+            if first && second do
+            	 puts "both are true"
+            else if first || second do
+            	 puts "at least one is true"
+            else
+            	puts "Neither first or second is true :("
+            end
+          TEXT
+        end
+
+        it 'evaluates that JUST ONE branch is true' do
+          expect do
+            perform_evaluation!(text)
+          end.to output("at least one is true\n").to_stdout
+        end
+      end
+
+      context 'when multipple branches have truthy valueS' do
+        let(:text) do
+          <<~TEXT
+            first = true
+            second = true
+
+            if first && second do
+            	 puts "both are true"
+            else if first || second do
+            	 puts "at least one is true"
+            else
+            	puts "Neither first or second is true :("
+            end
+          TEXT
+        end
+
+        it 'evaluates that JUST ONE branch is true' do
+          expect do
+            perform_evaluation!(text)
+          end.to output("both are true\n").to_stdout
+        end
+      end
+    end
 
     context 'when comparing values' do
       let(:text) do

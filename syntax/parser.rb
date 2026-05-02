@@ -9,8 +9,7 @@ module Syntax
       case kind
       when SyntaxKind::StarToken, SyntaxKind::SlashToken, SyntaxKind::DoubleStarToken then 2
       when SyntaxKind::PlusToken, SyntaxKind::MinusToken,
-           SyntaxKind::EqualityToken, SyntaxKind::InequalityToken,
-           SyntaxKind::LessThanToken, SyntaxKind::GreaterThanToken
+           *Constants::Kinds::BOOLEAN_OPERATORS
         1
       else 0
       end
