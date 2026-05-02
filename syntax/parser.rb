@@ -160,7 +160,7 @@ module Syntax
 
       elsif current.kind == SyntaxKind::OpenBracketToken
         index_open_bracket = match(SyntaxKind::OpenBracketToken)
-        index = next_token
+        index = parse_expression
         index_close_bracket = match(SyntaxKind::CloseBracketToken)
 
         aie = SyntaxNode.new(SyntaxNodeType::ArrayIndexingExpression,

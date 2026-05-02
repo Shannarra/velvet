@@ -1,4 +1,10 @@
+booleans = [true, false, false, true]
 simple_array = [1, 2, 3, 4, 5]
+
+print "Simple arrayception: simple_array[simple_array[simple_array[simple_array[0]]]] = "
+puts simple_array[simple_array[simple_array[simple_array[simple_array[0]]]]]
+
+puts booleans[simple_array[simple_array[simple_array[0]]]]
 
 #puts simple_array
 

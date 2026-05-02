@@ -1,3 +1,21 @@
+booleans = [true, false, true,  false]
+
+indexes = [1, 2, 3]
+
+if booleans[indexes[indexes[indexes[0]]]] do
+	 puts "We hit a TRUE value"
+else
+	puts "We hit a FALSE value"
+end
+
+if booleans[0] && booleans[2] do
+	 puts "We hit a TRUE value"
+else
+	puts "We hit a FALSE value"
+end
+
+
+
 first = true
 
 second = false

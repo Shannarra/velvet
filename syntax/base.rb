@@ -64,8 +64,9 @@ module Syntax
       OPERATORS = %w[+ - * ** / ( ) [ ] = == != < > && ||].freeze
       COMMENT = '#'
       EOF = '\0'
+      COMMA = ','
 
-      NON_ALPHA = [*SPACES, *OPERATORS, EOF].freeze
+      NON_ALPHA = [*SPACES, *OPERATORS, COMMA, EOF].freeze
 
       KEYWORDS = %w[if do else end true false].freeze
     end

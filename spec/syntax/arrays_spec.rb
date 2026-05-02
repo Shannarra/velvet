@@ -76,6 +76,23 @@ RSpec.describe 'Testing variables', type: :feature do
       end
     end
 
+    context 'when indexing array with itself' do
+      let(:text) do
+        <<~TEXT
+          simple_array = [1, 2, 3, 4, 5]
+
+          print "Array item = "
+          puts simple_array[simple_array[simple_array[simple_array[simple_array[0]]]]]
+        TEXT
+      end
+
+      it 'evaluates indexing correctly' do
+        expect do
+          perform_evaluation!(text)
+        end.to output("Array item = 5\n").to_stdout
+      end
+    end
+
     context 'when assignment indexing' do
       let(:text) do
         <<~TEXT
@@ -122,8 +139,7 @@ RSpec.describe 'Testing variables', type: :feature do
         scope = nil
 
         expect do
-          scope = Syntax::SyntaxTree.parse(text)
-          @eval.call(scope)
+          scope = perform_evaluation!(text)
         end.to raise_error(RuntimeError, 'Unexpected token <StringToken>. Expected <CommaToken> at 1:23')
 
         expect(scope&.root&.variables).to be_nil

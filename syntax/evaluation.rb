@@ -250,7 +250,7 @@ module Syntax
         )
       end
 
-      index_token
+      evaluate_expr! index_token
     end
 
     def evaluate_array_indexing(expr)

@@ -194,7 +194,7 @@ RSpec.describe 'Testing conditions', type: :feature do
         end
       end
 
-      context 'when condition is NOT satisfied' do
+      context 'when condition WITH "else" branch is NOT satisfied' do
         let(:text) do
           <<~TEXT
             if 1 == 3 do
@@ -211,11 +211,54 @@ RSpec.describe 'Testing conditions', type: :feature do
           TEXT
         end
 
-        it 'executes the condition' do
+        it 'executes the condition ELSE statement' do
           expect do
             perform_evaluation!(text)
           end.to output("None of the above.\nI live outside the condition\n").to_stdout
         end
+      end
+
+      context 'when condition WITHOUT "else" branch is NOT satisfied' do
+        let(:text) do
+          <<~TEXT
+            if 1 == 3 do
+            	 puts "1 ?= 3???"
+            else if 2 == 3 do
+            	 puts "2 ?= 3???"
+            else if 11 == 3 do
+            	 puts "11 ?= 3??"
+            end
+
+            puts "I live outside the condition"
+          TEXT
+        end
+
+        it 'executes the condition ELSE statement' do
+          expect do
+            perform_evaluation!(text)
+          end.to output("I live outside the condition\n").to_stdout
+        end
+      end
+    end
+
+    describe 'using conditions with variables and arrays' do
+      let(:text) do
+        <<~TEXT
+          booleans = [false, true, false,  true]
+          indexes = [1, 2, 3]
+
+          if booleans[indexes[indexes[indexes[0]]]] do
+          	 puts "We hit a TRUE value"
+          else
+          	puts "We hit a FALSE value"
+          end
+        TEXT
+      end
+
+      it 'evaluates the arrays and conditions' do
+        expect do
+          perform_evaluation!(text)
+        end.to output("We hit a TRUE value\n").to_stdout
       end
     end
   end
