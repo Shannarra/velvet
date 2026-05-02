@@ -279,6 +279,10 @@ module Syntax
     def evaluate_condition(expr)
       condition = evaluate_expr! expr.condition
 
+      unless condition.kind == SyntaxNodeType::BooleanExpression
+        raise "Condition MUST be a boolean expression. Got \"#{condition.text}\" (#{condition.kind}) at #{condition.start_printing_position}"
+      end
+
       if expr.condition_branches.count > 1
         index = condition.token.value ? 0 : 1
 
