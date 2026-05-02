@@ -1,9 +1,3 @@
-if true do
-	 unleak = "I don't leak"
-end
-
-puts unleak
-
 first = true
 
 second = false

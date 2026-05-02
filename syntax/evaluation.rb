@@ -280,16 +280,32 @@ module Syntax
       condition = evaluate_expr! expr.condition
 
       unless condition.kind == SyntaxNodeType::BooleanExpression
-        raise "Condition MUST be a boolean expression. Got \"#{condition.text}\" (#{condition.kind}) at #{condition.start_printing_position}"
+        raise "Condition MUST be a boolean expression.
+Got \"#{condition.text}\" (#{condition.kind}) at #{condition.start_printing_position}"
       end
 
-      if expr.condition_branches.count > 1
-        index = condition.token.value ? 0 : 1
+      branch = if expr.condition_branches.count > 1
+                 index = condition.token.value ? 0 : 1
 
-        evaluate_expr!(expr.condition_branches[index])
-      elsif condition.token.value
-        evaluate_expr! expr.condition_branches.first
-      end
+                 expr.condition_branches[index]
+               elsif condition.token.value
+                 expr.condition_branches.first
+               end
+
+      return if branch.nil?
+
+      # TODO: Stop if branches from leaking
+      # internally defined variables
+
+      # old_scope = @parent_scope
+
+      # @parent_scope = Scope.new({}, nil, 'new conditional scope')
+      # @variables = @parent_scope.variables
+
+      evaluate_expr! branch
+
+      # @parent_scope = old_scope
+      # @variables = @parent_scope.variables
     end
 
     def evaluate_body(expr)

@@ -74,6 +74,7 @@ module Syntax
 
     def children_for_kind
       case kind
+      when :scope then @children
       when SyntaxNodeType::NumberExpression,
            SyntaxNodeType::StringExpression,
            SyntaxNodeType::BooleanExpression then [token]
@@ -98,16 +99,29 @@ module Syntax
     end
   end
 
-  class GlobalScope < SyntaxNode
-    attr_accessor :variables
+  class Scope < SyntaxNode
+    attr_accessor :variables, :parent, :name
 
+    def initialize(variables, parent, name, **rest)
+      @variables = variables
+      @parent = parent
+      @name = name
+
+      super(
+        :scope,
+        **rest
+      )
+    end
+  end
+
+  class GlobalScope < Scope
     def initialize(variables = {})
       super(
+        variables,
+        nil,
         :GLOBAL_SCOPE,
         children: [],
       )
-
-      @variables = variables
     end
   end
 
