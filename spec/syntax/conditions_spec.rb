@@ -4,6 +4,17 @@ require 'spec_helper'
 
 RSpec.describe 'Testing conditions', type: :feature do
   describe 'using booleans' do
+    # context 'when using boolean values' do
+    #   let(:text) do
+    #     <<~TEXT
+    #       a = true
+    #       b = false
+
+    #       if a || bb
+    #     TEXT
+    #   end
+    # end
+
     context 'when comparing values' do
       let(:text) do
         <<~TEXT

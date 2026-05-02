@@ -149,26 +149,9 @@ module Syntax
         left_value = left.value
         right_value = right.value
 
-        if operator.kind == SyntaxKind::EqualityToken
-          return SyntaxNode.new(
-            SyntaxNodeType::BooleanExpression,
-            token: new_eval_token(
-              SyntaxKind::BooleanToken,
-              left,
-              left_value == right_value
-            )
-          )
+        return apply_boolean_operator(expr, left, operator, right) if Constants::Kinds::BOOLEAN_OPERATORS.include?(operator.kind)
 
-        elsif operator.kind == SyntaxKind::InequalityToken
-          return SyntaxNode.new(
-            SyntaxNodeType::BooleanExpression,
-            token: new_eval_token(
-              SyntaxKind::BooleanToken,
-              left,
-              left_value != right_value
-            )
-          )
-        end
+        raise "Operator #{operator.kind} is not applicable to numbers" unless Constants::Kinds::NUMERIC_OPERATORS.include?(operator.kind)
 
         new_eval_token(
           SyntaxKind::NumberToken,
@@ -207,6 +190,25 @@ module Syntax
       when SyntaxKind::DoubleStarToken then left**right
       else raise "Unexpected binary operator #{expr.operator.kind}".error!
       end
+    end
+
+    def apply_boolean_operator(expr, left, operator, right)
+      value = case operator.kind
+              when SyntaxKind::LessThanToken then left.value < right.value
+              when SyntaxKind::GreaterThanToken then left.value > right.value
+              when SyntaxKind::EqualityToken then left.value == right.value
+              when SyntaxKind::InequalityToken then left.value != right.value
+              else raise "Unexpected binary operator #{expr.operator.kind}".error!
+              end
+
+      SyntaxNode.new(
+        SyntaxNodeType::BooleanExpression,
+        token: new_eval_token(
+          SyntaxKind::BooleanToken,
+          left,
+          value
+        )
+      )
     end
 
     def evaluate_builtin(name_token, arg_value_token)

@@ -11,6 +11,12 @@ if a + b == 69 do
 end
 
 
+if a < b do
+	 puts "A is less than B"
+else
+	puts "B is less than A"
+end
+
 if true do
  	puts "nice"
 else

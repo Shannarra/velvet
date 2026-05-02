@@ -43,8 +43,12 @@ module Syntax
                SyntaxKind::CloseBracketToken
              when ','
                SyntaxKind::CommaToken
+             when '<'
+               SyntaxKind::LessThanToken
+             when '>'
+               SyntaxKind::GreaterThanToken
              when '!'
-               raise 'Unexpected ! found.' unless @text[@ip + 1] == '='
+               raise "Unexpected ! found at #{@position}" unless @text[@ip + 1] == '='
 
                get_next
                SyntaxKind::InequalityToken

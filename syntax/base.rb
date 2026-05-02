@@ -47,6 +47,8 @@ module Syntax
     KWRD_TRUE
     KWRD_FALSE
 
+    LessThanToken
+    GreaterThanToken
     EqualityToken
     InequalityToken
 
@@ -56,7 +58,7 @@ module Syntax
   module Constants
     module Values
       SPACES = [' ', "\n", "\t"].freeze
-      OPERATORS = %w[+ - * ** / ( ) [ ] = == !=].freeze
+      OPERATORS = %w[+ - * ** / ( ) [ ] = == != < >].freeze
       COMMENT = '#'
       EOF = '\0'
 
@@ -75,17 +77,27 @@ module Syntax
     module Kinds
       SPACES = [SyntaxKind::TabToken, SyntaxKind::NewlineToken, SyntaxKind::WhitespaceToken].freeze
 
-      OPERATORS = [
+      BOOLEAN_OPERATORS = [
+        SyntaxKind::LessThanToken,
+        SyntaxKind::GreaterThanToken,
+        SyntaxKind::EqualityToken,
+        SyntaxKind::InequalityToken
+      ].freeze
+
+      NUMERIC_OPERATORS = [
         SyntaxKind::PlusToken,
         SyntaxKind::MinusToken,
         SyntaxKind::StarToken,
         SyntaxKind::DoubleStarToken,
-        SyntaxKind::SlashToken,
+        SyntaxKind::SlashToken
+      ].freeze
+
+      OPERATORS = [
+        *NUMERIC_OPERATORS,
         SyntaxKind::OpenParenthesisToken,
         SyntaxKind::CloseParenthesisToken,
         SyntaxKind::AssignmentToken,
-        SyntaxKind::EqualityToken,
-        SyntaxKind::InequalityToken
+        *BOOLEAN_OPERATORS
       ].freeze
 
       KEYWORDS = [
