@@ -1,5 +1,88 @@
+booleans = [true, false, true,  false]
+
+indexes = [1, 2, 3]
+
+if booleans[indexes[indexes[indexes[0]]]] do
+	 puts "We hit a TRUE value"
+else
+	puts "We hit a FALSE value"
+end
+
+if booleans[0] && booleans[2] do
+	 puts "We hit a TRUE value"
+else
+	puts "We hit a FALSE value"
+end
+
+
+
+first = true
+
+second = false
+
+if first && second do
+	 puts "both are true"
+else if first || second do
+	 puts "at least one is true"
+else
+	puts "Neither first or second is true :("
+end
+
+print '1 != 2? : '
+puts 1!=2
+
 a = 17*2
 b = 35
+
+puts "nice?:"
+
+if a + b == 69 do
+  puts "Nice!"
+end
+
+if first && (a + b == 69) do
+	 puts "Nice BLYAT"
+else
+	puts "WTF"
+end
+
+if a < b do
+	 puts "A is less than B"
+else
+	puts "B is less than A"
+end
+
+if true do
+ 	puts "nice"
+else
+	puts "fuck off"
+end
+
+
+if false do
+	puts "fuck off"
+else
+ 	puts "nice"
+end
+
+
+if 1 == 3 do
+	 puts "1 ?= 3???"
+else if 2 == 3 do
+	 puts "2 ?= 3???"
+else if 3 == 3 do
+	 puts "3 == 3 :)"
+else
+	 puts "This should have never been printed."	 
+end
+
+if a + b != 69 do
+	 puts "FUCK YOU"
+end
+
+
+print "Is a = b ??: "
+puts a == b
 
 if a+b == 69 do
 	 puts "Nice."
@@ -9,7 +92,7 @@ if a+b == 69 do
 	 print "Value of c: "
 	 puts c
 
-	 if c + 1 == 70 do
+	 if c + 1 != 69 do
 	 		puts "ok!"
 	 else
 			puts "fuck me ;("
@@ -47,7 +130,8 @@ if a+1 == b do
 	 did_i_leak = "I leaked ;("
 end
 
-# Values created within conditions DO leak
-# to their parent scope. This will be resolved later.
-print "Did it leak?: "
-puts did_i_leak
+# Values created within conditions DO NOT leak to their parent scope.
+# Therefore, if uncommented, this will raise an "Unknown variable "did_i_leak" at 139:5" error:
+
+# print "Did it leak?: "
+# puts did_i_leak

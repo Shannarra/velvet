@@ -124,13 +124,14 @@ end
 
 puts "Do inner values leak?"
 
-#did_i_leak = "I did NOT leak!"
+# did_i_leak = "I did NOT leak!"
 
 if a+1 == b do
 	 did_i_leak = "I leaked ;("
 end
 
-# Values created within conditions DO leak
-# to their parent scope. This will be resolved later.
-print "Did it leak?: "
-puts did_i_leak
+# Values created within conditions DO NOT leak to their parent scope.
+# Therefore, if uncommented, this will raise an "Unknown variable "did_i_leak" at 139:5" error:
+
+# print "Did it leak?: "
+# puts did_i_leak

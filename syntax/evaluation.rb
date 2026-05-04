@@ -7,8 +7,10 @@ module Syntax
     def initialize(root, parent_scope)
       @root = root
       @diagnostics = []
-      @parent_scope = parent_scope
-      @variables = parent_scope.variables
+      @parent_scope = parent_scope.parent
+      @current_scope = parent_scope
+
+      @eval_iter = 0
     end
 
     def eval!
@@ -50,6 +52,8 @@ module Syntax
     private
 
     def evaluate_expr!(expr)
+      @eval_iter += 1
+
       unless EVALUATION_METHODS.key?(expr.kind.to_sym)
         raise "[EVALUATION]: Unexpected node \"#{expr.kind}\" - I don't know how to handle it."
       end
@@ -76,20 +80,53 @@ module Syntax
     end
 
     def evaluate_identifier(expr)
-      if @variables.keys.include? expr.id.value
-        value_token = @variables[expr.id.value]
+      # check current scope for existing variable name
+      if @current_scope.variables.keys.include? expr.id.value
+        value_token = @current_scope.variables[expr.id.value]
 
         return value_token
       end
+
+      # if not found - check all parent scopes until found
+      variable = deep_search_parent_variable_for!(expr)
+
+      return variable if variable
 
       diagnostics << "Unknown variable \"#{expr.id.value}\" at #{expr.id.start_printing_position}"
       raise diagnostics.last
     end
 
+    # Digs through all parent scopes in the tree
+    # until we find a variable matching the given expression
+    #
+    # If the variable is found - we return its value
+    # If @param return_scope is provided we return the entire scope
+    # where the value was found instead.
+    def deep_search_parent_variable_for!(expr, return_scope: false)
+      parent = @parent_scope
+      until parent.nil?
+        if parent.variables.keys.include? expr.id.value
+          value_token = parent.variables[expr.id.value]
+
+          return parent if return_scope
+
+          return value_token
+        end
+        parent = parent.parent
+      end
+    end
+
     def evaluate_assignment(expr)
       result = evaluate_expr! expr.value
 
-      @variables[expr.id.value] = result
+      scope = deep_search_parent_variable_for!(expr, return_scope: true)
+
+      if scope
+        scope.variables[expr.id.value] = result
+      else
+        @current_scope.variables[expr.id.value] = result
+      end
+
       result
     end
 
@@ -294,18 +331,9 @@ Got \"#{condition.text}\" (#{condition.kind}) at #{condition.start_printing_posi
 
       return if branch.nil?
 
-      # TODO: Stop if branches from leaking
-      # internally defined variables
+      new_scope = Scope.new({}, @current_scope, "Conditional scope #{@eval_iter}")
 
-      # old_scope = @parent_scope
-
-      # @parent_scope = Scope.new({}, nil, 'new conditional scope')
-      # @variables = @parent_scope.variables
-
-      evaluate_expr! branch
-
-      # @parent_scope = old_scope
-      # @variables = @parent_scope.variables
+      Evaluator.new(branch, new_scope).eval!
     end
 
     def evaluate_body(expr)
