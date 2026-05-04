@@ -10,6 +10,7 @@ module Syntax
 
     StringToken
     NumberToken
+
     PlusToken
     MinusToken
     StarToken
@@ -37,16 +38,37 @@ module Syntax
 
     IdentifierToken
     BuiltinFunction
+
+    KWRD_IF
+    KWRD_ELSE
+    KWRD_DO
+    KWRD_END
+
+    KWRD_TRUE
+    KWRD_FALSE
+
+    LessThanToken
+    GreaterThanToken
+    EqualityToken
+    InequalityToken
+
+    BooleanToken
+
+    BooleanAND
+    BooleanOR
   ]
 
   module Constants
     module Values
       SPACES = [' ', "\n", "\t"].freeze
-      OPERATORS = %w[+ - * ** / ( ) [ ] =].freeze
+      OPERATORS = %w[+ - * ** / ( ) [ ] = == != < > && ||].freeze
       COMMENT = '#'
       EOF = '\0'
+      COMMA = ','
 
-      NON_ALPHA = [*SPACES, *OPERATORS, EOF].freeze
+      NON_ALPHA = [*SPACES, *OPERATORS, COMMA, EOF].freeze
+
+      KEYWORDS = %w[if do else end true false].freeze
     end
 
     module Builtin
@@ -59,15 +81,38 @@ module Syntax
     module Kinds
       SPACES = [SyntaxKind::TabToken, SyntaxKind::NewlineToken, SyntaxKind::WhitespaceToken].freeze
 
-      OPERATORS = [
+      BOOLEAN_OPERATORS = [
+        SyntaxKind::LessThanToken,
+        SyntaxKind::GreaterThanToken,
+        SyntaxKind::EqualityToken,
+        SyntaxKind::InequalityToken,
+        SyntaxKind::BooleanAND,
+        SyntaxKind::BooleanOR
+      ].freeze
+
+      NUMERIC_OPERATORS = [
         SyntaxKind::PlusToken,
         SyntaxKind::MinusToken,
         SyntaxKind::StarToken,
         SyntaxKind::DoubleStarToken,
-        SyntaxKind::SlashToken,
+        SyntaxKind::SlashToken
+      ].freeze
+
+      OPERATORS = [
+        *NUMERIC_OPERATORS,
         SyntaxKind::OpenParenthesisToken,
         SyntaxKind::CloseParenthesisToken,
-        SyntaxKind::AssignmentToken
+        SyntaxKind::AssignmentToken,
+        *BOOLEAN_OPERATORS
+      ].freeze
+
+      KEYWORDS = [
+        SyntaxKind::KWRD_IF,
+        SyntaxKind::KWRD_ELSE,
+        SyntaxKind::KWRD_DO,
+        SyntaxKind::KWRD_END,
+        SyntaxKind::KWRD_TRUE,
+        SyntaxKind::KWRD_FALSE
       ].freeze
 
       COMMENT = SyntaxKind::CommentToken

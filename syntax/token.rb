@@ -12,6 +12,12 @@ module Syntax
       @position = position
       @text = text
       @value = value
+
+      if kind == SyntaxKind::KWRD_TRUE
+        @value = true
+      elsif kind == SyntaxKind::KWRD_FALSE
+        @value = false
+      end
     end
 
     def start_printing_position

@@ -13,7 +13,7 @@ module Syntax
       @position = Position.new
     end
 
-    def lex!
+    def lex! # rubocop:disable Metrics/MethodLength
       return Token.new(SyntaxKind::EOFToken, @position.dup, '\0', nil) if @ip >= @text.length
 
       return handle_string if %w[' "].include?(current)
@@ -43,8 +43,32 @@ module Syntax
                SyntaxKind::CloseBracketToken
              when ','
                SyntaxKind::CommaToken
+             when '<'
+               SyntaxKind::LessThanToken
+             when '>'
+               SyntaxKind::GreaterThanToken
+             when '!'
+               raise "Unexpected ! found at #{@position}" unless @text[@ip + 1] == '='
+
+               get_next
+               SyntaxKind::InequalityToken
+             when '&'
+               raise 'unexpected &' unless @text[@ip + 1] == current
+
+               get_next
+               SyntaxKind::BooleanAND
+             when '|'
+               raise 'unexpected |' unless @text[@ip + 1] == current
+
+               get_next
+               SyntaxKind::BooleanOR
              when '='
-               SyntaxKind::AssignmentToken
+               if @text[@ip + 1] == current
+                 get_next
+                 SyntaxKind::EqualityToken
+               else
+                 SyntaxKind::AssignmentToken
+               end
              else
                token = ''
                until Constants::Values::NON_ALPHA.include?(current)
@@ -61,6 +85,8 @@ module Syntax
                  )
                end
 
+               return handle_keyword(token) if Constants::Values::KEYWORDS.include?(token)
+
                return Token.new(SyntaxKind::IdentifierToken, @position.dup, token, token)
              end
 
@@ -73,6 +99,27 @@ module Syntax
     end
 
     private
+
+    def handle_keyword(token)
+      kword_type =  case token
+                    when 'if'
+                      SyntaxKind::KWRD_IF
+                    when 'else'
+                      SyntaxKind::KWRD_ELSE
+                    when 'do'
+                      SyntaxKind::KWRD_DO
+                    when 'end'
+                      SyntaxKind::KWRD_END
+                    when 'true'
+                      SyntaxKind::KWRD_TRUE
+                    when 'false'
+                      SyntaxKind::KWRD_FALSE
+                    else
+                      raise "Unknown keyword \"#{token}\""
+                    end
+
+      Token.new(kword_type, @position.dup, token, nil)
+    end
 
     def handle_comment
       start = @ip

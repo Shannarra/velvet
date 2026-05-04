@@ -7,8 +7,10 @@ module Syntax
     def initialize(root, parent_scope)
       @root = root
       @diagnostics = []
-      @parent_scope = parent_scope
-      @variables = parent_scope.variables
+      @parent_scope = parent_scope.parent
+      @current_scope = parent_scope
+
+      @eval_iter = 0
     end
 
     def eval!
@@ -31,6 +33,7 @@ module Syntax
     EVALUATION_METHODS = {
       NumberExpression: :self_token,
       StringExpression: :self_token,
+      BooleanExpression: :self_token,
       IdentifierExpression: :evaluate_identifier,
       AssignmentExpression: :evaluate_assignment,
       ParenthesizedExpression: :evaluate_sub_expr,
@@ -39,13 +42,21 @@ module Syntax
       ArrayIndexingExpression: :evaluate_array_indexing,
       ArrayIndexingAssignmentExpression: :evaluate_array_indexing_assignment,
       GlobalScope: :evaluate_global_scope,
-      BuiltinFunctionExpression: :evaluate_builtin_function
+      BuiltinFunctionExpression: :evaluate_builtin_function,
+      IfExpression: :evaluate_condition,
+      BodyExpression: :evaluate_body,
+      KWRD_TRUE: :wrap_to_node,
+      KWRD_FALSE: :wrap_to_node
     }.freeze
 
     private
 
     def evaluate_expr!(expr)
-      raise "Unexpected node \"#{expr.kind}\" - I don't know how to handle it." unless EVALUATION_METHODS.key?(expr.kind.to_sym)
+      @eval_iter += 1
+
+      unless EVALUATION_METHODS.key?(expr.kind.to_sym)
+        raise "[EVALUATION]: Unexpected node \"#{expr.kind}\" - I don't know how to handle it."
+      end
 
       __send__(EVALUATION_METHODS[expr.kind.to_sym], expr)
     end
@@ -54,21 +65,68 @@ module Syntax
       expr.token
     end
 
+    def wrap_to_node(expr)
+      type = case expr.kind
+             when SyntaxKind::KWRD_TRUE, SyntaxKind::KWRD_FALSE
+               SyntaxNodeType::BooleanExpression
+             else
+               raise "Could not wrap expression #{expr} into node"
+             end
+
+      SyntaxNode.new(
+        type,
+        token: expr
+      )
+    end
+
     def evaluate_identifier(expr)
-      if @variables.keys.include? expr.id.value
-        value_token = @variables[expr.id.value]
+      # check current scope for existing variable name
+      if @current_scope.variables.keys.include? expr.id.value
+        value_token = @current_scope.variables[expr.id.value]
 
         return value_token
       end
+
+      # if not found - check all parent scopes until found
+      variable = deep_search_parent_variable_for!(expr)
+
+      return variable if variable
 
       diagnostics << "Unknown variable \"#{expr.id.value}\" at #{expr.id.start_printing_position}"
       raise diagnostics.last
     end
 
+    # Digs through all parent scopes in the tree
+    # until we find a variable matching the given expression
+    #
+    # If the variable is found - we return its value
+    # If @param return_scope is provided we return the entire scope
+    # where the value was found instead.
+    def deep_search_parent_variable_for!(expr, return_scope: false)
+      parent = @parent_scope
+      until parent.nil?
+        if parent.variables.keys.include? expr.id.value
+          value_token = parent.variables[expr.id.value]
+
+          return parent if return_scope
+
+          return value_token
+        end
+        parent = parent.parent
+      end
+    end
+
     def evaluate_assignment(expr)
       result = evaluate_expr! expr.value
 
-      @variables[expr.id.value] = result
+      scope = deep_search_parent_variable_for!(expr, return_scope: true)
+
+      if scope
+        scope.variables[expr.id.value] = result
+      else
+        @current_scope.variables[expr.id.value] = result
+      end
+
       result
     end
 
@@ -77,7 +135,7 @@ module Syntax
       right = evaluate_expr!(expr.right)
       operator = expr.operator
 
-      eval_binary_expr(left, operator, right)
+      eval_binary_expr(expr, left, operator, right)
     end
 
     def evaluate_array(expr)
@@ -121,17 +179,21 @@ module Syntax
       )
     end
 
-    def eval_binary_expr(left, operator, right)
+    def eval_binary_expr(expr, left, operator, right)
       if left.kind == SyntaxKind::NumberToken &&
          right.kind == SyntaxKind::NumberToken
 
         left_value = left.value
         right_value = right.value
 
+        return apply_boolean_operator(expr, left, operator, right) if Constants::Kinds::BOOLEAN_OPERATORS.include?(operator.kind)
+
+        raise "Operator #{operator.kind} is not applicable to numbers" unless Constants::Kinds::NUMERIC_OPERATORS.include?(operator.kind)
+
         new_eval_token(
           SyntaxKind::NumberToken,
           left,
-          apply_numeric_operator(left_value, operator, right_value)
+          apply_numeric_operator(expr, left_value, operator, right_value)
         )
       elsif left.kind == SyntaxKind::StringToken &&
             right.kind == SyntaxKind::StringToken
@@ -147,12 +209,20 @@ module Syntax
         end
 
         raise "Operator #{operator.text} is not applicable to strings."
+      elsif left.kind == SyntaxNodeType::BooleanExpression &&
+            right.kind == SyntaxNodeType::BooleanExpression
+
+        unless Constants::Kinds::BOOLEAN_OPERATORS.include?(operator.kind)
+          raise "Operator #{operator.kind} is not applicable to boolean expressions"
+        end
+
+        apply_boolean_operator(expr, left.token, operator, right.token)
       else
-        raise "Operator #{operator.text} is not applicable to \"#{left.value}\" and \"#{right.value}\""
+        raise "Operator #{operator.text} is not applicable to \"#{left.value}\" (#{left.kind}) and \"#{right.value}\" (#{right.kind})"
       end
     end
 
-    def apply_numeric_operator(left, operator, right)
+    def apply_numeric_operator(expr, left, operator, right)
       case operator.kind
       when SyntaxKind::PlusToken then left + right
       when SyntaxKind::MinusToken then left - right
@@ -165,6 +235,27 @@ module Syntax
       when SyntaxKind::DoubleStarToken then left**right
       else raise "Unexpected binary operator #{expr.operator.kind}".error!
       end
+    end
+
+    def apply_boolean_operator(expr, left, operator, right)
+      value = case operator.kind
+              when SyntaxKind::LessThanToken then left.value < right.value
+              when SyntaxKind::GreaterThanToken then left.value > right.value
+              when SyntaxKind::EqualityToken then left.value == right.value
+              when SyntaxKind::InequalityToken then left.value != right.value
+              when SyntaxKind::BooleanAND then left.value && right.value
+              when SyntaxKind::BooleanOR then left.value || right.value
+              else raise "Unexpected binary operator #{expr.operator.kind}".error!
+              end
+
+      SyntaxNode.new(
+        SyntaxNodeType::BooleanExpression,
+        token: new_eval_token(
+          SyntaxKind::BooleanToken,
+          left,
+          value
+        )
+      )
     end
 
     def evaluate_builtin(name_token, arg_value_token)
@@ -188,11 +279,15 @@ module Syntax
       index_token = given_index_token
 
       if given_index_token.kind == SyntaxKind::IdentifierToken
-        index_token = evaluate_expr!(SyntaxNode.new(SyntaxNodeType::IdentifierExpression,
-                                                    id: given_index_token))
+        index_token = evaluate_expr!(
+          SyntaxNode.new(
+            SyntaxNodeType::IdentifierExpression,
+            id: given_index_token
+          )
+        )
       end
 
-      index_token
+      evaluate_expr! index_token
     end
 
     def evaluate_array_indexing(expr)
@@ -204,7 +299,12 @@ module Syntax
     end
 
     def evaluate_array_indexing_assignment(expr)
-      array_token = evaluate_expr!(SyntaxNode.new(SyntaxNodeType::IdentifierExpression, id: expr.array_indexing_expression.array_id))
+      array_token = evaluate_expr!(
+        SyntaxNode.new(
+          SyntaxNodeType::IdentifierExpression,
+          id: expr.array_indexing_expression.array_id
+        )
+      )
 
       index_value = array_index_token(array_token, expr.array_indexing_expression.index).value
 
@@ -213,12 +313,43 @@ module Syntax
       array_token
     end
 
+    def evaluate_condition(expr)
+      condition = evaluate_expr! expr.condition
+
+      unless condition.kind == SyntaxNodeType::BooleanExpression
+        raise "Condition MUST be a boolean expression.
+Got \"#{condition.text}\" (#{condition.kind}) at #{condition.start_printing_position}"
+      end
+
+      branch = if expr.condition_branches.count > 1
+                 index = condition.token.value ? 0 : 1
+
+                 expr.condition_branches[index]
+               elsif condition.token.value
+                 expr.condition_branches.first
+               end
+
+      return if branch.nil?
+
+      new_scope = Scope.new({}, @current_scope, "Conditional scope #{@eval_iter}")
+
+      Evaluator.new(branch, new_scope).eval!
+    end
+
+    def evaluate_body(expr)
+      expr.body_items.map do |subtree|
+        evaluate_expr! subtree
+      end
+    end
+
     def builtin_puts(arg)
       case arg.kind
       when SyntaxKind::ArrayExpression
         arg.value.each do |sub|
           builtin_puts(sub)
         end
+      when SyntaxNodeType::BooleanExpression
+        builtin_puts(arg.token)
       else
         puts arg.value
       end
@@ -232,6 +363,8 @@ module Syntax
           builtin_print(sub)
         end
         print ']'
+      when SyntaxNodeType::BooleanExpression
+        builtin_print(arg.token)
       else
         print arg.value
       end

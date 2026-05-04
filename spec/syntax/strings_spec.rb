@@ -112,7 +112,7 @@ RSpec.describe 'Testing variables', type: :feature do
             perform_evaluation!(text)
           end.to raise_error(
             RuntimeError,
-            "Operator #{operator} is not applicable to \"Hello, \" and \"#{number_value}\""
+            "Operator #{operator} is not applicable to \"Hello, \" (StringToken) and \"#{number_value}\" (NumberToken)"
           )
         end
       end
