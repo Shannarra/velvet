@@ -33,6 +33,8 @@ module Syntax
                SyntaxKind::StarToken
              when '/'
                SyntaxKind::SlashToken
+             when '%'
+               SyntaxKind::ModuloToken
              when '('
                SyntaxKind::OpenParenthesisToken
              when ')'
@@ -114,6 +116,10 @@ module Syntax
                       SyntaxKind::KWRD_TRUE
                     when 'false'
                       SyntaxKind::KWRD_FALSE
+                    when 'from'
+                      SyntaxKind::KWRD_FROM
+                    when 'to'
+                      SyntaxKind::KWRD_TO
                     else
                       raise "Unknown keyword \"#{token}\""
                     end

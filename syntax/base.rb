@@ -16,6 +16,7 @@ module Syntax
     StarToken
     DoubleStarToken
     SlashToken
+    ModuloToken
     OpenParenthesisToken
     CloseParenthesisToken
     AssignmentToken
@@ -47,6 +48,9 @@ module Syntax
     KWRD_TRUE
     KWRD_FALSE
 
+    KWRD_FROM
+    KWRD_TO
+
     LessThanToken
     GreaterThanToken
     EqualityToken
@@ -68,7 +72,7 @@ module Syntax
 
       NON_ALPHA = [*SPACES, *OPERATORS, COMMA, EOF].freeze
 
-      KEYWORDS = %w[if do else end true false].freeze
+      KEYWORDS = %w[if do else end true false from to].freeze
     end
 
     module Builtin
@@ -95,7 +99,8 @@ module Syntax
         SyntaxKind::MinusToken,
         SyntaxKind::StarToken,
         SyntaxKind::DoubleStarToken,
-        SyntaxKind::SlashToken
+        SyntaxKind::SlashToken,
+        SyntaxKind::ModuloToken
       ].freeze
 
       OPERATORS = [
@@ -112,7 +117,9 @@ module Syntax
         SyntaxKind::KWRD_DO,
         SyntaxKind::KWRD_END,
         SyntaxKind::KWRD_TRUE,
-        SyntaxKind::KWRD_FALSE
+        SyntaxKind::KWRD_FALSE,
+        SyntaxKind::KWRD_FROM,
+        SyntaxKind::KWRD_TO
       ].freeze
 
       COMMENT = SyntaxKind::CommentToken

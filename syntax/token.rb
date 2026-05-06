@@ -20,6 +20,10 @@ module Syntax
       end
     end
 
+    def value=(other)
+      @value = other
+    end
+
     def start_printing_position
       col = position.col - text.length
 

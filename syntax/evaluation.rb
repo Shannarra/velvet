@@ -46,7 +46,8 @@ module Syntax
       IfExpression: :evaluate_condition,
       BodyExpression: :evaluate_body,
       KWRD_TRUE: :wrap_to_node,
-      KWRD_FALSE: :wrap_to_node
+      KWRD_FALSE: :wrap_to_node,
+      ForLoopExpression: :evaluate_from_loop
     }.freeze
 
     private
@@ -233,6 +234,7 @@ module Syntax
 
         left / denom
       when SyntaxKind::DoubleStarToken then left**right
+      when SyntaxKind::ModuloToken then left % right
       else raise "Unexpected binary operator #{expr.operator.kind}".error!
       end
     end
@@ -333,7 +335,20 @@ Got \"#{condition.text}\" (#{condition.kind}) at #{condition.start_printing_posi
 
       new_scope = Scope.new({}, @current_scope, "Conditional scope #{@eval_iter}")
 
-      Evaluator.new(branch, new_scope).eval!
+      result = Evaluator.new(branch, new_scope).eval!
+
+      result.first
+    end
+
+    def evaluate_from_loop(expr)
+      upper_bound_token = evaluate_expr!(expr.upper_bound)
+
+      lower_bound_token = evaluate_expr!(expr.lower_assignment)
+
+      while lower_bound_token.value < upper_bound_token.value
+        evaluate_body(expr.loop_body)
+        lower_bound_token.value += 1
+      end
     end
 
     def evaluate_body(expr)

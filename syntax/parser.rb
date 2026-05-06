@@ -7,7 +7,7 @@ module Syntax
   module ParsingHelpers
     def binary_operator_precedence(kind)
       case kind
-      when SyntaxKind::StarToken, SyntaxKind::SlashToken, SyntaxKind::DoubleStarToken then 2
+      when SyntaxKind::StarToken, SyntaxKind::SlashToken, SyntaxKind::DoubleStarToken, SyntaxKind::ModuloToken then 2
       when SyntaxKind::PlusToken, SyntaxKind::MinusToken,
            *Constants::Kinds::BOOLEAN_OPERATORS
         1
@@ -217,12 +217,13 @@ module Syntax
 
         match(SyntaxKind::KWRD_DO)
 
-        body = parse_body(keyword: SyntaxKind::KWRD_DO)
+        body_end_kinds = [SyntaxKind::KWRD_ELSE, SyntaxKind::KWRD_END, SyntaxKind::EOFToken]
+        body = parse_body(keyword: SyntaxKind::KWRD_DO, body_end_kinds:)
         cond.condition_branches << body
 
         if current.kind != SyntaxKind::KWRD_END
           next_token
-          cond.condition_branches << parse_body(keyword: SyntaxKind::KWRD_ELSE)
+          cond.condition_branches << parse_body(keyword: SyntaxKind::KWRD_ELSE, body_end_kinds:)
         end
 
         next_token
@@ -231,15 +232,36 @@ module Syntax
       elsif [SyntaxKind::KWRD_TRUE, SyntaxKind::KWRD_FALSE].include?(current.kind)
         SyntaxNode.new(SyntaxNodeType::BooleanExpression, token: current)
         next_token
+      elsif current.kind == SyntaxKind::KWRD_FROM
+        keyword = next_token
+
+        lower_assignment = parse_expression
+
+        unless lower_assignment.kind == SyntaxNodeType::AssignmentExpression
+          raise "Expected variable assignment as first argument of from loop, got #{lower_assignment.kind} instead."
+        end
+
+        raise "For loop expected upper bound, #{to_candidate.text} found." unless current.kind == SyntaxKind::KWRD_TO
+
+        # Consume the "to" token
+        next_token
+
+        upper_bound = parse_expression
+
+        _do_token = match(SyntaxKind::KWRD_DO)
+        loop_body = parse_body(keyword:)
+
+        next_token
+        SyntaxNode.new(SyntaxNodeType::ForLoopExpression, keyword:, lower_assignment:, upper_bound:, loop_body:)
       else
         raise "Unexpected keyword \"#{current.text}\" found at #{current.start_printing_position}"
       end
     end
 
-    def parse_body(keyword:)
+    def parse_body(keyword:, body_end_kinds: [SyntaxKind::KWRD_END, SyntaxKind::EOFToken])
       body_items = []
 
-      until [SyntaxKind::KWRD_ELSE, SyntaxKind::KWRD_END, SyntaxKind::EOFToken].include?(current.kind)
+      until body_end_kinds.include?(current.kind)
         expr = parse_expression
 
         body_items << expr
