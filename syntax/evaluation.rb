@@ -103,8 +103,9 @@ module Syntax
     # If the variable is found - we return its value
     # If @param return_scope is provided we return the entire scope
     # where the value was found instead.
-    def deep_search_parent_variable_for!(expr, return_scope: false)
-      parent = @parent_scope
+    def deep_search_parent_variable_for!(expr, parent: nil, return_scope: false)
+      parent ||= @parent_scope
+
       until parent.nil?
         if parent.variables.keys.include? expr.id.value
           value_token = parent.variables[expr.id.value]
@@ -333,28 +334,48 @@ Got \"#{condition.text}\" (#{condition.kind}) at #{condition.start_printing_posi
 
       return if branch.nil?
 
-      new_scope = Scope.new({}, @current_scope, "Conditional scope #{@eval_iter}")
-
-      result = Evaluator.new(branch, new_scope).eval!
-
-      result.first
+      within_scope(name: "Conditional scope #{@eval_iter}") do
+        branch
+      end
     end
 
     def evaluate_from_loop(expr)
       upper_bound_token = evaluate_expr!(expr.upper_bound)
 
-      lower_bound_token = evaluate_expr!(expr.lower_assignment)
+      parent = @current_scope
+
+      from_loop_scope = Scope.new({}, parent, "FROM loop scope #{@eval_iter}")
+
+      Evaluator.new(expr.lower_assignment, from_loop_scope).eval!
+
+      lower_bound_token = from_loop_scope.variables[expr.lower_assignment.id.value]
+
+      lower_bound_token = deep_search_parent_variable_for!(expr.lower_assignment, parent:) if lower_bound_token.nil?
 
       while lower_bound_token.value < upper_bound_token.value
-        evaluate_body(expr.loop_body)
+        within_scope(scope: from_loop_scope) do
+          expr.loop_body
+        end
         lower_bound_token.value += 1
       end
+
+      @current_scope = parent
     end
 
     def evaluate_body(expr)
       expr.body_items.map do |subtree|
         evaluate_expr! subtree
       end
+    end
+
+    def within_scope(scope: nil, parent: @current_scope, name: 'idk', &block)
+      scope ||= Scope.new({}, parent, name)
+
+      branch = yield block
+
+      result = Evaluator.new(branch, scope).eval!
+
+      result.first
     end
 
     def builtin_puts(arg)

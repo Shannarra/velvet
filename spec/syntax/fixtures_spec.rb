@@ -60,5 +60,16 @@ RSpec.describe 'Testing variables', type: :feature do
         end.to output(anything).to_stdout
       end
     end
+
+    context 'with multiline conditions' do
+      let(:filename) { './spec/fixtures/file_with_from_to.txt' }
+
+      it 'parses the file correctly and prints to stdout' do
+        expect do
+          content = File.read(filename)
+          perform_evaluation!(content)
+        end.to output(anything).to_stdout
+      end
+    end
   end
 end

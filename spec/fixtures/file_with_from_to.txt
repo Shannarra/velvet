@@ -1,0 +1,48 @@
+puts "Numbers from 1 to 10:"
+from i = 1 to 11 do
+	puts i
+end
+
+puts "Numbers from 1 to 100 with increment 5:"
+
+from i = 1 to 101 do
+	if i % 5 == 0 do
+		 puts i
+	end
+end
+
+
+puts "Inverted from does not execute:"
+from i = 10 to 0 do
+	puts i
+end
+
+array = [1,2,3,4,5]
+
+array[1] = if array[1] == 2 do
+				 			70
+					 else
+							69
+					end
+array[2] = 69
+
+
+# i = 69	 
+
+puts "Looping an array: "
+if true do
+	 if false do
+	 		# nil
+	 else
+	 		if true do 
+				from i = 0 to 5 do
+					puts array[i]
+				end
+			end
+	end
+end
+
+# Loop variables do NOT leak outside the loop's scope:
+# This raises an 'Unknown variable "i" at 35:5' error as expected if uncommented.
+# puts "I value after loop:"
+# puts i

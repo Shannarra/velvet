@@ -26,9 +26,23 @@ array[1] = if array[1] == 2 do
 					end
 array[2] = 69
 
-from i = 0 to 5 do
-	puts array[i]
+
+# i = 69	 
+
+puts "Looping an array: "
+if true do
+	 if false do
+	 		# nil
+	 else
+	 		if true do 
+				from i = 0 to 5 do
+					puts array[i]
+				end
+			end
+	end
 end
 
-puts "I after execution: "
-puts i
+# Loop variables do NOT leak outside the loop's scope:
+# This raises an 'Unknown variable "i" at 35:5' error as expected if uncommented.
+# puts "I value after loop:"
+# puts i

@@ -36,8 +36,7 @@ module Syntax
                    keyword: nil, # generic keyword expression
                    condition: nil, condition_branches: nil, # conditional expression
                    body_items: nil, body_end: nil, # body expression
-                   lower_assignment: nil, upper_bound: nil, loop_body: nil # for loop expression
-                  )
+                   lower_assignment: nil, upper_bound: nil, loop_body: nil) # for loop expression
       # rubocop:enable Metrics/ParameterLists
       @kind = kind
       @left = left
