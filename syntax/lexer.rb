@@ -122,6 +122,8 @@ module Syntax
                       SyntaxKind::KWRD_TO
                     when 'step'
                       SyntaxKind::KWRD_STEP
+                    when 'break'
+                      SyntaxKind::KWRD_BREAK
                     else
                       raise "Unknown keyword \"#{token}\""
                     end

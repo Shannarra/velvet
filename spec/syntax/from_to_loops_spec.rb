@@ -44,7 +44,7 @@ RSpec.describe 'Testing from..to loops', type: :feature do
 
     context 'when getting the product of an array' do
       let(:array) do
-        Array.new(rand(20)) { rand(1..100) }
+        Array.new(rand(20)) { rand(2..100) }
       end
 
       let(:text) do
@@ -86,6 +86,27 @@ RSpec.describe 'Testing from..to loops', type: :feature do
         expect do
           perform_evaluation!(text)
         end.to output('').to_stdout
+      end
+    end
+
+    context 'when using "break"' do
+      let(:text) do
+        <<~TEXT
+          from i = 1 to 101 step 3 do
+          	if i < 33 do
+          		 puts i
+          	else
+          		 puts "Breaking!"
+          		 break
+            end
+          end
+        TEXT
+      end
+
+      it 'does not evaluate' do
+        expect do
+          perform_evaluation!(text)
+        end.to output("1\n4\n7\n10\n13\n16\n19\n22\n25\n28\n31\nBreaking!\n").to_stdout
       end
     end
   end

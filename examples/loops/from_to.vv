@@ -1,7 +1,14 @@
 puts "Numbers from 1 to 33 with step 3:"
 
-from i = 1 to 33 step 3-4 do
-	puts i
+from i = 1 to 101 step 3 do
+	if i < 33 do
+		 puts i
+	else
+		 puts "Breaking!"
+		 break
+
+		 puts "I am after break"	# this should not eval
+  end
 end
 
 

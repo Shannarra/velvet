@@ -1,6 +1,32 @@
 # frozen_string_literal: true
 
+require 'singleton'
+
 module Syntax
+  # Singleton keeping track of the current eval state
+  # accross any level of recursion and any scope
+  class EvaluationState
+    include Singleton
+
+    attr_accessor :should_break
+
+    # Completely unnecessary static helper methods
+    # made purely for readability
+    class << self
+      def should_break?
+        instance.should_break
+      end
+
+      def set_break!
+        instance.should_break = true
+      end
+
+      def unset_break!
+        instance.should_break = false
+      end
+    end
+  end
+
   class Evaluator # rubocop:disable Metrics/ClassLength
     attr_reader :diagnostics
 
@@ -47,7 +73,8 @@ module Syntax
       BodyExpression: :evaluate_body,
       KWRD_TRUE: :wrap_to_node,
       KWRD_FALSE: :wrap_to_node,
-      ForLoopExpression: :evaluate_from_loop
+      ForLoopExpression: :evaluate_from_loop,
+      BreakExpression: :break_expression
     }.freeze
 
     private
@@ -334,7 +361,7 @@ Got \"#{condition.text}\" (#{condition.kind}) at #{condition.start_printing_posi
 
       return if branch.nil?
 
-      within_scope(name: "Conditional scope #{@eval_iter}") do
+      within_scope(name: "Conditional scope #{@eval_iter}", kind: expr.kind) do
         branch
       end
     end
@@ -344,8 +371,7 @@ Got \"#{condition.text}\" (#{condition.kind}) at #{condition.start_printing_posi
 
       parent = @current_scope
 
-      # TODO: maybe just evaluate_expr! here?
-      from_loop_scope = Scope.new({}, parent, "FROM loop scope #{@eval_iter}")
+      from_loop_scope = Scope.new({}, parent, "FROM loop scope #{@eval_iter}", kind: expr.kind)
 
       Evaluator.new(expr.lower_assignment, from_loop_scope).eval!
 
@@ -375,11 +401,29 @@ Got \"#{step_token.value}\" at #{step_token.start_printing_position}."
           expr.loop_body
         end
 
+        break if EvaluationState.should_break?
+
         step = step_token ? step_token.value : 1
         lower_bound_token.value += step
       end
 
+      EvaluationState.unset_break!
+
       @current_scope = parent
+    end
+
+    def break_expression(expr)
+      scope = @current_scope
+
+      loop_kinds = [SyntaxNodeType::ForLoopExpression]
+
+      until loop_kinds.include?(scope.kind)
+        raise "BREAK should only be used within a loop. Found at #{expr.token.start_printing_position}" if scope.parent.nil?
+
+        scope = scope.parent
+      end
+
+      EvaluationState.set_break!
     end
 
     def evaluate_body(expr)
@@ -388,8 +432,8 @@ Got \"#{step_token.value}\" at #{step_token.start_printing_position}."
       end
     end
 
-    def within_scope(scope: nil, parent: @current_scope, name: 'idk', &block)
-      scope ||= Scope.new({}, parent, name)
+    def within_scope(scope: nil, parent: @current_scope, name: 'idk', kind: nil, &block)
+      scope ||= Scope.new({}, parent, name, kind:, children: @current_scope.children)
 
       branch = yield block
 

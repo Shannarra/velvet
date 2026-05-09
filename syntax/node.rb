@@ -95,6 +95,7 @@ module Syntax
       when SyntaxNodeType::IfExpression then [keyword, condition, condition_branches]
       when SyntaxNodeType::BodyExpression, SyntaxNodeType::ConditionalExpression then [keyword, body_items, body_end]
       when SyntaxNodeType::ForLoopExpression then [lower_assignment, upper_bound, loop_body, loop_step]
+      when SyntaxNodeType::BreakExpression then []
       else
         raise "Unknown children for kind #{kind}. Fix #{__FILE__}:#{__LINE__}"
       end
@@ -109,13 +110,13 @@ module Syntax
   class Scope < SyntaxNode
     attr_accessor :variables, :parent, :name
 
-    def initialize(variables, parent, name, **rest)
+    def initialize(variables, parent, name, kind: nil, **rest)
       @variables = variables
       @parent = parent
       @name = name
 
       super(
-        :scope,
+        kind || rest[:kind],
         **rest
       )
     end
@@ -157,5 +158,6 @@ module Syntax
     BodyExpression
 
     ForLoopExpression
+    BreakExpression
   ].freeze
 end

@@ -233,39 +233,13 @@ module Syntax
         SyntaxNode.new(SyntaxNodeType::BooleanExpression, token: current)
         next_token
       elsif current.kind == SyntaxKind::KWRD_FROM
-        keyword = next_token
-
-        lower_assignment = parse_expression
-
-        unless lower_assignment.kind == SyntaxNodeType::AssignmentExpression
-          raise "Expected variable assignment as first argument of from loop, got #{lower_assignment.kind} instead."
-        end
-
-        raise "For loop expected upper bound, #{to_candidate.text} found." unless current.kind == SyntaxKind::KWRD_TO
-
-        # Consume the "to" token
-        next_token
-
-        upper_bound = parse_expression
-
-        loop_step = nil
-        if current.kind == SyntaxKind::KWRD_STEP
-          next_token
-
-          loop_step = parse_expression
-        end
-
-        _do_token = match(SyntaxKind::KWRD_DO)
-        loop_body = parse_body(keyword:)
-
+        parse_from_to_loop
+      elsif current.kind == SyntaxKind::KWRD_BREAK
+        token = current
         next_token
         SyntaxNode.new(
-          SyntaxNodeType::ForLoopExpression,
-          keyword:,
-          lower_assignment:,
-          upper_bound:,
-          loop_step:,
-          loop_body:
+          SyntaxNodeType::BreakExpression,
+          token:
         )
       else
         raise "Unexpected keyword \"#{current.text}\" found at #{current.start_printing_position}"
@@ -284,6 +258,43 @@ module Syntax
       body_end = current
 
       SyntaxNode.new(SyntaxNodeType::BodyExpression, keyword:, body_items:, body_end:)
+    end
+
+    def parse_from_to_loop
+      keyword = next_token
+
+      lower_assignment = parse_expression
+
+      unless lower_assignment.kind == SyntaxNodeType::AssignmentExpression
+        raise "Expected variable assignment as first argument of from loop, got #{lower_assignment.kind} instead."
+      end
+
+      raise "For loop expected upper bound, #{to_candidate.text} found." unless current.kind == SyntaxKind::KWRD_TO
+
+      # Consume the "to" token
+      next_token
+
+      upper_bound = parse_expression
+
+      loop_step = nil
+      if current.kind == SyntaxKind::KWRD_STEP
+        next_token
+
+        loop_step = parse_expression
+      end
+
+      _do_token = match(SyntaxKind::KWRD_DO)
+      loop_body = parse_body(keyword:)
+
+      next_token
+      SyntaxNode.new(
+        SyntaxNodeType::ForLoopExpression,
+        keyword:,
+        lower_assignment:,
+        upper_bound:,
+        loop_step:,
+        loop_body:
+      )
     end
   end
 end
