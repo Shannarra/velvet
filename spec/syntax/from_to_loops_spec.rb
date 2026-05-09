@@ -82,10 +82,44 @@ RSpec.describe 'Testing from..to loops', type: :feature do
         TEXT
       end
 
-      it 'prints all the numbers' do
+      it 'does not evaluate' do
         expect do
           perform_evaluation!(text)
         end.to output('').to_stdout
+      end
+    end
+  end
+
+  describe 'when either of the loop bounds are NOT numbers' do
+    context 'when lower bound is NOT a number' do
+      let(:text) do
+        <<~TEXT
+          from i = 'some text' to 10 do
+            print i
+          end
+        TEXT
+      end
+
+      it 'does not evaluate' do
+        expect do
+          perform_evaluation!(text)
+        end.to raise_error(RuntimeError, 'Lower bound for from..to loop must evaluate to a number. Got "some text" at 1:11.')
+      end
+    end
+
+    context 'when lower bound is NOT a number' do
+      let(:text) do
+        <<~TEXT
+          from i = 1 to 'some text' do
+            print i
+          end
+        TEXT
+      end
+
+      it 'does not evaluate' do
+        expect do
+          perform_evaluation!(text)
+        end.to raise_error(RuntimeError, 'Upper bound for from..to loop must evaluate to a number. Got "some text" at 1:16.')
       end
     end
   end

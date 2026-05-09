@@ -352,6 +352,16 @@ Got \"#{condition.text}\" (#{condition.kind}) at #{condition.start_printing_posi
 
       lower_bound_token = deep_search_parent_variable_for!(expr.lower_assignment, parent:) if lower_bound_token.nil?
 
+      unless upper_bound_token.kind == SyntaxKind::NumberToken
+        raise "Upper bound for from..to loop must evaluate to a number. \
+Got \"#{upper_bound_token.value}\" at #{upper_bound_token.start_printing_position}."
+      end
+
+      unless lower_bound_token.kind == SyntaxKind::NumberToken
+        raise "Lower bound for from..to loop must evaluate to a number. \
+Got \"#{lower_bound_token.value}\" at #{lower_bound_token.start_printing_position}."
+      end
+
       while lower_bound_token.value < upper_bound_token.value
         within_scope(scope: from_loop_scope) do
           expr.loop_body
