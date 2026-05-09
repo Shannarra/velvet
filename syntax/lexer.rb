@@ -120,6 +120,8 @@ module Syntax
                       SyntaxKind::KWRD_FROM
                     when 'to'
                       SyntaxKind::KWRD_TO
+                    when 'step'
+                      SyntaxKind::KWRD_STEP
                     else
                       raise "Unknown keyword \"#{token}\""
                     end

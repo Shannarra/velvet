@@ -50,6 +50,7 @@ module Syntax
 
     KWRD_FROM
     KWRD_TO
+    KWRD_STEP
 
     LessThanToken
     GreaterThanToken
@@ -72,7 +73,7 @@ module Syntax
 
       NON_ALPHA = [*SPACES, *OPERATORS, COMMA, EOF].freeze
 
-      KEYWORDS = %w[if do else end true false from to].freeze
+      KEYWORDS = %w[if do else end true false from to step].freeze
     end
 
     module Builtin
@@ -119,7 +120,8 @@ module Syntax
         SyntaxKind::KWRD_TRUE,
         SyntaxKind::KWRD_FALSE,
         SyntaxKind::KWRD_FROM,
-        SyntaxKind::KWRD_TO
+        SyntaxKind::KWRD_TO,
+        SyntaxKind::KWRD_STEP
       ].freeze
 
       COMMENT = SyntaxKind::CommentToken

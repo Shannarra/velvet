@@ -248,11 +248,25 @@ module Syntax
 
         upper_bound = parse_expression
 
+        loop_step = nil
+        if current.kind == SyntaxKind::KWRD_STEP
+          next_token
+
+          loop_step = parse_expression
+        end
+
         _do_token = match(SyntaxKind::KWRD_DO)
         loop_body = parse_body(keyword:)
 
         next_token
-        SyntaxNode.new(SyntaxNodeType::ForLoopExpression, keyword:, lower_assignment:, upper_bound:, loop_body:)
+        SyntaxNode.new(
+          SyntaxNodeType::ForLoopExpression,
+          keyword:,
+          lower_assignment:,
+          upper_bound:,
+          loop_step:,
+          loop_body:
+        )
       else
         raise "Unexpected keyword \"#{current.text}\" found at #{current.start_printing_position}"
       end

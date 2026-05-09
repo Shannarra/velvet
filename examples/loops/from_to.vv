@@ -1,3 +1,10 @@
+puts "Numbers from 1 to 33 with step 3:"
+
+from i = 1 to 33 step 3-4 do
+	puts i
+end
+
+
 puts "Numbers from 1 to 10:"
 from i = 1 to 11 do
 	puts i

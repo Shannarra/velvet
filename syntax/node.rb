@@ -20,7 +20,7 @@ module Syntax
                 :condition,
                 :condition_branches,
                 :body_items, :body_end,
-                :lower_assignment, :upper_bound, :loop_body
+                :lower_assignment, :upper_bound, :loop_body, :loop_step
 
     # rubocop:disable Metrics/ParameterLists
     def initialize(kind, children: nil,
@@ -36,7 +36,7 @@ module Syntax
                    keyword: nil, # generic keyword expression
                    condition: nil, condition_branches: nil, # conditional expression
                    body_items: nil, body_end: nil, # body expression
-                   lower_assignment: nil, upper_bound: nil, loop_body: nil) # for loop expression
+                   lower_assignment: nil, upper_bound: nil, loop_step: nil, loop_body: nil) # for loop expression
       # rubocop:enable Metrics/ParameterLists
       @kind = kind
       @left = left
@@ -62,6 +62,7 @@ module Syntax
       @body_end = body_end
       @lower_assignment = lower_assignment
       @upper_bound = upper_bound
+      @loop_step = loop_step
       @loop_body = loop_body
 
       @children = if children.nil?
@@ -93,7 +94,7 @@ module Syntax
       when SyntaxNodeType::BuiltinFunctionExpression then [name, args]
       when SyntaxNodeType::IfExpression then [keyword, condition, condition_branches]
       when SyntaxNodeType::BodyExpression, SyntaxNodeType::ConditionalExpression then [keyword, body_items, body_end]
-      when SyntaxNodeType::ForLoopExpression then [lower_assignment, upper_bound, loop_body]
+      when SyntaxNodeType::ForLoopExpression then [lower_assignment, upper_bound, loop_body, loop_step]
       else
         raise "Unknown children for kind #{kind}. Fix #{__FILE__}:#{__LINE__}"
       end

@@ -344,6 +344,7 @@ Got \"#{condition.text}\" (#{condition.kind}) at #{condition.start_printing_posi
 
       parent = @current_scope
 
+      # TODO: maybe just evaluate_expr! here?
       from_loop_scope = Scope.new({}, parent, "FROM loop scope #{@eval_iter}")
 
       Evaluator.new(expr.lower_assignment, from_loop_scope).eval!
@@ -351,6 +352,8 @@ Got \"#{condition.text}\" (#{condition.kind}) at #{condition.start_printing_posi
       lower_bound_token = from_loop_scope.variables[expr.lower_assignment.id.value]
 
       lower_bound_token = deep_search_parent_variable_for!(expr.lower_assignment, parent:) if lower_bound_token.nil?
+
+      step_token = evaluate_expr!(expr.loop_step) if expr.loop_step
 
       unless upper_bound_token.kind == SyntaxKind::NumberToken
         raise "Upper bound for from..to loop must evaluate to a number. \
@@ -362,11 +365,18 @@ Got \"#{upper_bound_token.value}\" at #{upper_bound_token.start_printing_positio
 Got \"#{lower_bound_token.value}\" at #{lower_bound_token.start_printing_position}."
       end
 
+      if step_token && step_token.kind != SyntaxKind::NumberToken
+        raise "Step for from..to loop must evaluate to a number. \
+Got \"#{step_token.value}\" at #{step_token.start_printing_position}."
+      end
+
       while lower_bound_token.value < upper_bound_token.value
         within_scope(scope: from_loop_scope) do
           expr.loop_body
         end
-        lower_bound_token.value += 1
+
+        step = step_token ? step_token.value : 1
+        lower_bound_token.value += step
       end
 
       @current_scope = parent
