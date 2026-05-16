@@ -7,7 +7,7 @@ from i = 1 to 101 step 3 do
 		 puts "Breaking!"
 		 break
 
-		 puts "I am after break"	# this should not eval
+		 puts "I am called after a break"	# this will not eval
   end
 end
 

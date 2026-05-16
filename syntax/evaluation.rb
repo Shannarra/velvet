@@ -13,7 +13,7 @@ module Syntax
     # Completely unnecessary static helper methods
     # made purely for readability
     class << self
-      def should_break?
+      def should_cancel_eval?
         instance.should_break
       end
 
@@ -401,7 +401,7 @@ Got \"#{step_token.value}\" at #{step_token.start_printing_position}."
           expr.loop_body
         end
 
-        break if EvaluationState.should_break?
+        break if EvaluationState.should_cancel_eval?
 
         step = step_token ? step_token.value : 1
         lower_bound_token.value += step
@@ -428,6 +428,8 @@ Got \"#{step_token.value}\" at #{step_token.start_printing_position}."
 
     def evaluate_body(expr)
       expr.body_items.map do |subtree|
+        next if EvaluationState.should_cancel_eval?
+
         evaluate_expr! subtree
       end
     end

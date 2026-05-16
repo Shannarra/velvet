@@ -90,23 +90,48 @@ RSpec.describe 'Testing from..to loops', type: :feature do
     end
 
     context 'when using "break"' do
-      let(:text) do
-        <<~TEXT
-          from i = 1 to 101 step 3 do
-          	if i < 33 do
-          		 puts i
-          	else
-          		 puts "Breaking!"
-          		 break
+      context 'when no tokens after "break"' do
+        let(:text) do
+          <<~TEXT
+            from i = 1 to 101 step 3 do
+            	if i < 33 do
+            		 puts i
+            	else
+            		 puts "Breaking!"
+            		 break
+              end
             end
-          end
-        TEXT
+          TEXT
+        end
+
+        it 'does not evaluate' do
+          expect do
+            perform_evaluation!(text)
+          end.to output("1\n4\n7\n10\n13\n16\n19\n22\n25\n28\n31\nBreaking!\n").to_stdout
+        end
       end
 
-      it 'does not evaluate' do
-        expect do
-          perform_evaluation!(text)
-        end.to output("1\n4\n7\n10\n13\n16\n19\n22\n25\n28\n31\nBreaking!\n").to_stdout
+      context 'when there are tokens after "break"' do
+        let(:text) do
+          <<~TEXT
+            from i = 1 to 101 step 3 do
+            	if i < 33 do
+            		 puts i
+            	else
+            		 puts "Breaking!"
+            		 break
+
+                 puts "I definitely should NEVER EVAL"
+              end
+            end
+          TEXT
+        end
+
+        it 'does not evaluate' do
+          expect do
+            perform_evaluation!(text)
+          end.to output("1\n4\n7\n10\n13\n16\n19\n22\n25\n28\n31\nBreaking!\n").to_stdout
+        end
       end
     end
   end
