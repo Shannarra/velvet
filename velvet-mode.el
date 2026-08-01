@@ -21,7 +21,7 @@
 (define-generic-mode
 		'velvet-mode
 	'("#")
-	'("if" "else" "do" "end" "true" "false")
+	'("if" "else" "do" "end" "true" "false" "from" "to" "step" "while" "print" "puts")
 	'(
 		("+" "-" "*" "**" "/" "(" ")" "[" "]" "=" "==" "!=" "<" ">" "&&" "||" . 'font-lock-operator)
 		("puts" "print" . 'font-lock-builtin)

@@ -1,0 +1,27 @@
+puts "Hello world!"
+
+puts "Looping up to 100"
+
+i = 0
+
+while i < 101 do
+	puts i
+	i = i + 5
+end
+
+puts "Done"
+
+# using break
+
+while true do
+	print i
+	i = 1 + i
+
+	if i > 1000 do
+		 puts "Reached the limit!"
+		 break
+  end
+end
+
+print "I is now = "
+puts i

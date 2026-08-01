@@ -14,8 +14,6 @@ else
 	puts "We hit a FALSE value"
 end
 
-
-
 first = true
 
 second = false
@@ -124,7 +122,7 @@ end
 
 puts "Do inner values leak?"
 
-# did_i_leak = "I did NOT leak!"
+did_i_leak = "I did NOT leak!"
 
 if a+1 == b do
 	 did_i_leak = "I leaked ;("
@@ -133,5 +131,5 @@ end
 # Values created within conditions DO NOT leak to their parent scope.
 # Therefore, if uncommented, this will raise an "Unknown variable "did_i_leak" at 139:5" error:
 
-# print "Did it leak?: "
-# puts did_i_leak
+print "Did it leak?: "
+puts did_i_leak

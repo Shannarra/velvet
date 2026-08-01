@@ -175,6 +175,8 @@ module Syntax
           right = parse_expression
 
           return SyntaxNode.new(SyntaxNodeType::ArrayIndexingAssignmentExpression, array_indexing_expression: aie, right:)
+        elsif current.kind == SyntaxKind::CommaToken
+#          binding.pry
         end
 
         return aie
@@ -234,6 +236,8 @@ module Syntax
         next_token
       elsif current.kind == SyntaxKind::KWRD_FROM
         parse_from_to_loop
+      elsif current.kind == SyntaxKind::KWRD_WHILE
+        parse_wile_loop
       elsif current.kind == SyntaxKind::KWRD_BREAK
         token = current
         next_token
@@ -293,6 +297,24 @@ module Syntax
         lower_assignment:,
         upper_bound:,
         loop_step:,
+        loop_body:
+      )
+    end
+
+    def parse_wile_loop
+      keyword = next_token
+
+      condition = parse_expression
+
+      _do_token = match(SyntaxKind::KWRD_DO)
+      loop_body = parse_body(keyword:)
+
+      next_token
+
+      SyntaxNode.new(
+        SyntaxNodeType::WhileLoopExpression,
+        keyword:,
+        condition:,
         loop_body:
       )
     end

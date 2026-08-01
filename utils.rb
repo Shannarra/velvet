@@ -34,7 +34,8 @@ class String
 
   def numeric?
     # for some reason /[0-9]/ doesn't match numbers ffs
-    (match?(/[[:digit:]]/) && match?(/[1-9]/)) || self == '0'
+
+    match?(/[\d_]/)
   end
 
   def error!

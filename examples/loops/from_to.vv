@@ -1,3 +1,12 @@
+arr = [
+		[1,2,3],
+		[4,5,6]
+]
+
+print "arr[1][0]: "
+puts arr[1, 0]
+# kajshdkjsahdkahsdkjh
+
 puts "Numbers from 1 to 33 with step 3:"
 
 from i = 1 to 101 step 3 do
@@ -10,7 +19,6 @@ from i = 1 to 101 step 3 do
 		 puts "I am called after a break"	# this will not eval
   end
 end
-
 
 puts "Numbers from 1 to 10:"
 from i = 1 to 11 do
@@ -37,7 +45,7 @@ array[1] = if array[1] == 2 do
 				 			70
 					 else
 							69
-					end
+					 end
 array[2] = 69
 
 

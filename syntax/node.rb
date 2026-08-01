@@ -96,6 +96,7 @@ module Syntax
       when SyntaxNodeType::BodyExpression, SyntaxNodeType::ConditionalExpression then [keyword, body_items, body_end]
       when SyntaxNodeType::ForLoopExpression then [lower_assignment, upper_bound, loop_body, loop_step]
       when SyntaxNodeType::BreakExpression then []
+      when SyntaxNodeType::WhileLoopExpression then [keyword, condition, loop_body]
       else
         raise "Unknown children for kind #{kind}. Fix #{__FILE__}:#{__LINE__}"
       end
@@ -159,5 +160,6 @@ module Syntax
 
     ForLoopExpression
     BreakExpression
+    WhileLoopExpression
   ].freeze
 end

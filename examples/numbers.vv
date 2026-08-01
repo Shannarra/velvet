@@ -51,3 +51,8 @@ result						= thirty_seven + n_nineteen + fifty_six
 # print the result
 print "Result is: "
 puts result
+
+
+test = 10_000
+
+puts test
