@@ -241,6 +241,8 @@ module Syntax
           SyntaxNodeType::BreakExpression,
           token:
         )
+      elsif current.kind == SyntaxKind::KWRD_WHILE
+        parse_while_loop
       else
         raise "Unexpected keyword \"#{current.text}\" found at #{current.start_printing_position}"
       end
@@ -293,6 +295,25 @@ module Syntax
         lower_assignment:,
         upper_bound:,
         loop_step:,
+        loop_body:
+      )
+    end
+
+    def parse_while_loop
+      keyword = next_token
+
+      condition = parse_expression
+
+      _do = match(SyntaxKind::KWRD_DO)
+
+      loop_body = parse_body(keyword:)
+
+      next_token
+
+      SyntaxNode.new(
+        SyntaxNodeType::WhileLoopExpression,
+        keyword:,
+        condition:,
         loop_body:
       )
     end

@@ -1,0 +1,16 @@
+i = 0
+
+while true do
+		print "I looop indefinitely. Iteration: "
+		puts i
+
+		i = i + 1
+
+		if i == 10 do
+			 break
+    end	
+end
+
+# while 69 do
+# 	puts 'asdad'
+# end

@@ -124,6 +124,8 @@ module Syntax
                       SyntaxKind::KWRD_STEP
                     when 'break'
                       SyntaxKind::KWRD_BREAK
+                    when 'while'
+                      SyntaxKind::KWRD_WHILE
                     else
                       raise "Unknown keyword \"#{token}\""
                     end

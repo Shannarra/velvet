@@ -74,7 +74,8 @@ module Syntax
       KWRD_TRUE: :wrap_to_node,
       KWRD_FALSE: :wrap_to_node,
       ForLoopExpression: :evaluate_from_loop,
-      BreakExpression: :break_expression
+      BreakExpression: :break_expression,
+      WhileLoopExpression: :evaluate_while_expression
     }.freeze
 
     private
@@ -412,10 +413,36 @@ Got \"#{step_token.value}\" at #{step_token.start_printing_position}."
       @current_scope = parent
     end
 
+    def evaluate_while_expression(expr)
+      parent = @current_scope
+
+      while_loop_scope = Scope.new({}, parent, "WHILE loop scope #{@eval_iter}", kind: expr.kind)
+
+      e = Evaluator.new(expr.condition, while_loop_scope).eval!
+
+      unless e.kind == SyntaxNodeType::BooleanExpression
+        raise "Condition for \"while\" loop must evaluate to a boolean, got: \"#{e.value}\""
+      end
+
+      while e.token.value
+        within_scope(scope: while_loop_scope) do
+          expr.loop_body
+        end
+
+        e = evaluate_expr!(expr.condition)
+
+        break if EvaluationState.should_cancel_eval?
+      end
+
+      EvaluationState.unset_break!
+
+      @current_scope = parent
+    end
+
     def break_expression(expr)
       scope = @current_scope
 
-      loop_kinds = [SyntaxNodeType::ForLoopExpression]
+      loop_kinds = [SyntaxNodeType::ForLoopExpression, SyntaxNodeType::WhileLoopExpression]
 
       until loop_kinds.include?(scope.kind)
         raise "BREAK should only be used within a loop. Found at #{expr.token.start_printing_position}" if scope.parent.nil?
