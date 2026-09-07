@@ -1,6 +1,32 @@
 # frozen_string_literal: true
 
+require 'singleton'
+
 module Syntax
+  # Singleton keeping track of the current eval state
+  # accross any level of recursion and any scope
+  class EvaluationState
+    include Singleton
+
+    attr_accessor :should_break
+
+    # Completely unnecessary static helper methods
+    # made purely for readability
+    class << self
+      def should_cancel_eval?
+        instance.should_break
+      end
+
+      def set_break!
+        instance.should_break = true
+      end
+
+      def unset_break!
+        instance.should_break = false
+      end
+    end
+  end
+
   class Evaluator # rubocop:disable Metrics/ClassLength
     attr_reader :diagnostics
 
@@ -46,7 +72,10 @@ module Syntax
       IfExpression: :evaluate_condition,
       BodyExpression: :evaluate_body,
       KWRD_TRUE: :wrap_to_node,
-      KWRD_FALSE: :wrap_to_node
+      KWRD_FALSE: :wrap_to_node,
+      ForLoopExpression: :evaluate_from_loop,
+      BreakExpression: :break_expression,
+      WhileLoopExpression: :evaluate_while_expression
     }.freeze
 
     private
@@ -102,8 +131,9 @@ module Syntax
     # If the variable is found - we return its value
     # If @param return_scope is provided we return the entire scope
     # where the value was found instead.
-    def deep_search_parent_variable_for!(expr, return_scope: false)
-      parent = @parent_scope
+    def deep_search_parent_variable_for!(expr, parent: nil, return_scope: false)
+      parent ||= @parent_scope
+
       until parent.nil?
         if parent.variables.keys.include? expr.id.value
           value_token = parent.variables[expr.id.value]
@@ -233,6 +263,7 @@ module Syntax
 
         left / denom
       when SyntaxKind::DoubleStarToken then left**right
+      when SyntaxKind::ModuloToken then left % right
       else raise "Unexpected binary operator #{expr.operator.kind}".error!
       end
     end
@@ -331,15 +362,113 @@ Got \"#{condition.text}\" (#{condition.kind}) at #{condition.start_printing_posi
 
       return if branch.nil?
 
-      new_scope = Scope.new({}, @current_scope, "Conditional scope #{@eval_iter}")
+      within_scope(name: "Conditional scope #{@eval_iter}", kind: expr.kind) do
+        branch
+      end
+    end
 
-      Evaluator.new(branch, new_scope).eval!
+    def evaluate_from_loop(expr)
+      upper_bound_token = evaluate_expr!(expr.upper_bound)
+
+      parent = @current_scope
+
+      from_loop_scope = Scope.new({}, parent, "FROM loop scope #{@eval_iter}", kind: expr.kind)
+
+      Evaluator.new(expr.lower_assignment, from_loop_scope).eval!
+
+      lower_bound_token = from_loop_scope.variables[expr.lower_assignment.id.value]
+
+      lower_bound_token = deep_search_parent_variable_for!(expr.lower_assignment, parent:) if lower_bound_token.nil?
+
+      step_token = evaluate_expr!(expr.loop_step) if expr.loop_step
+
+      unless upper_bound_token.kind == SyntaxKind::NumberToken
+        raise "Upper bound for from..to loop must evaluate to a number. \
+Got \"#{upper_bound_token.value}\" at #{upper_bound_token.start_printing_position}."
+      end
+
+      unless lower_bound_token.kind == SyntaxKind::NumberToken
+        raise "Lower bound for from..to loop must evaluate to a number. \
+Got \"#{lower_bound_token.value}\" at #{lower_bound_token.start_printing_position}."
+      end
+
+      if step_token && step_token.kind != SyntaxKind::NumberToken
+        raise "Step for from..to loop must evaluate to a number. \
+Got \"#{step_token.value}\" at #{step_token.start_printing_position}."
+      end
+
+      while lower_bound_token.value < upper_bound_token.value
+        within_scope(scope: from_loop_scope) do
+          expr.loop_body
+        end
+
+        break if EvaluationState.should_cancel_eval?
+
+        step = step_token ? step_token.value : 1
+        lower_bound_token.value += step
+      end
+
+      EvaluationState.unset_break!
+
+      @current_scope = parent
+    end
+
+    def evaluate_while_expression(expr)
+      parent = @current_scope
+
+      while_loop_scope = Scope.new({}, parent, "WHILE loop scope #{@eval_iter}", kind: expr.kind)
+
+      e = Evaluator.new(expr.condition, while_loop_scope).eval!
+
+      unless e.kind == SyntaxNodeType::BooleanExpression
+        raise "Condition for \"while\" loop must evaluate to a boolean, got: \"#{e.value}\""
+      end
+
+      while e.token.value
+        within_scope(scope: while_loop_scope) do
+          expr.loop_body
+        end
+
+        e = evaluate_expr!(expr.condition)
+
+        break if EvaluationState.should_cancel_eval?
+      end
+
+      EvaluationState.unset_break!
+
+      @current_scope = parent
+    end
+
+    def break_expression(expr)
+      scope = @current_scope
+
+      loop_kinds = [SyntaxNodeType::ForLoopExpression, SyntaxNodeType::WhileLoopExpression]
+
+      until loop_kinds.include?(scope.kind)
+        raise "BREAK should only be used within a loop. Found at #{expr.token.start_printing_position}" if scope.parent.nil?
+
+        scope = scope.parent
+      end
+
+      EvaluationState.set_break!
     end
 
     def evaluate_body(expr)
       expr.body_items.map do |subtree|
+        next if EvaluationState.should_cancel_eval?
+
         evaluate_expr! subtree
       end
+    end
+
+    def within_scope(scope: nil, parent: @current_scope, name: 'idk', kind: nil, &block)
+      scope ||= Scope.new({}, parent, name, kind:, children: @current_scope.children)
+
+      branch = yield block
+
+      result = Evaluator.new(branch, scope).eval!
+
+      result.first
     end
 
     def builtin_puts(arg)

@@ -4,7 +4,8 @@ require_relative 'node'
 
 module Syntax
   class Token < SyntaxNode
-    attr_reader :position, :text, :value
+    attr_accessor :value
+    attr_reader :position, :text
 
     def initialize(kind, position, text, value)
       super(kind, children: []) # don't pass Token properties as children
