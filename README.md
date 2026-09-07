@@ -2,10 +2,29 @@
 A Ruby-inspired programming language made for fun. No llms used.
 
 
+## Features
+More examples can be found at [the examples folder](./examples). Documentation on language features TBD.
+
+Velvet has the features needed by any programming language, including:
+
+1. Variables
+
+Declare a variable using the syntax `[name] = [value]`, value types are dynamically infered.
+
+2. Conditionals
+
+Conditions work as in any other programming language, for more information see [the conditions examples](./examples/conditions.vv).
+
+3. Loops
+
+Velvet provides the `from..to[..step]` loop and `while` loop. Examples can be found in [the loops folder](./examples/loops/).
+
+4. Functions - TBD.
+
 ### Examples
 Run an example by passing a file:
 ```console
-ruby main.rb ./examples/numbers.vv
+ruby main.rb -f ./examples/numbers.vv
 -277695.63956043957
 ```
 

@@ -43,36 +43,42 @@ class String
 end
 
 def pretty_print_tree(root, indent = '', is_last: true)
+  return if root.nil?
+  return if root.is_a?(String)
+
   marker = is_last ? '└───' : '├───'
 
-  value = nil
-  if root.is_a?(Syntax::SyntaxTree)
-    root = root.root
-  elsif root.is_a? Array
-    if root.is_a?(Syntax::Token)
-      value = root.value
-    else
-      indent += is_last ? '    ' : '│   '
+  root = root.root if root.is_a?(Syntax::SyntaxTree)
 
-      return root.each do |item|
-        pretty_print_tree(item, indent)
-      end
+  # when the sub-tree is an array - print all items as children
+  if root.is_a?(Array)
+    last_item = root.last
+
+    root.each do |item|
+      pretty_print_tree item, "#{indent}│   ", is_last: item == last_item
     end
-  else
-    value = root&.value
+
+    return
   end
 
-  if root
-    out = "#{indent}#{marker}#{root&.kind}"
-    out += " \"#{value}\"" if value
+  print "#{indent}#{marker}#{root.kind}"
 
-    puts out
+  # special print for different root values
+  if root.is_a?(Syntax::Token) && !root.value.nil?
+    print case root.kind
+          when Syntax::SyntaxKind::StringToken
+            " \"#{root.value}\""
+          else
+            " #{root.value}"
+          end
   end
+
+  puts
 
   indent += is_last ? '    ' : '│   '
-  last_child = root.children[-1] if root
+  last_child = root.children[-1]
 
-  root&.children do |child|
+  root.children do |child|
     pretty_print_tree(child, indent, is_last: child == last_child)
   end
 end
