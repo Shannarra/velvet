@@ -3,7 +3,7 @@
 require_relative 'token'
 
 module Syntax
-  class Lexer # rubocop:disable Syntax/ClassLength
+  class Lexer # rubocop:disable Metrics/ClassLength
     attr_reader :diagnostics
 
     def initialize(text)
@@ -103,32 +103,32 @@ module Syntax
     private
 
     def handle_keyword(token)
-      kword_type =  case token
-                    when 'if'
-                      SyntaxKind::KWRD_IF
-                    when 'else'
-                      SyntaxKind::KWRD_ELSE
-                    when 'do'
-                      SyntaxKind::KWRD_DO
-                    when 'end'
-                      SyntaxKind::KWRD_END
-                    when 'true'
-                      SyntaxKind::KWRD_TRUE
-                    when 'false'
-                      SyntaxKind::KWRD_FALSE
-                    when 'from'
-                      SyntaxKind::KWRD_FROM
-                    when 'to'
-                      SyntaxKind::KWRD_TO
-                    when 'step'
-                      SyntaxKind::KWRD_STEP
-                    when 'break'
-                      SyntaxKind::KWRD_BREAK
-                    when 'while'
-                      SyntaxKind::KWRD_WHILE
-                    else
-                      raise "Unknown keyword \"#{token}\""
-                    end
+      kword_type = case token
+                   when 'if'
+                     SyntaxKind::KWRD_IF
+                   when 'else'
+                     SyntaxKind::KWRD_ELSE
+                   when 'do'
+                     SyntaxKind::KWRD_DO
+                   when 'end'
+                     SyntaxKind::KWRD_END
+                   when 'true'
+                     SyntaxKind::KWRD_TRUE
+                   when 'false'
+                     SyntaxKind::KWRD_FALSE
+                   when 'from'
+                     SyntaxKind::KWRD_FROM
+                   when 'to'
+                     SyntaxKind::KWRD_TO
+                   when 'step'
+                     SyntaxKind::KWRD_STEP
+                   when 'break'
+                     SyntaxKind::KWRD_BREAK
+                   when 'while'
+                     SyntaxKind::KWRD_WHILE
+                   else
+                     raise "Unknown keyword \"#{token}\""
+                   end
 
       Token.new(kword_type, @position.dup, token, nil)
     end
